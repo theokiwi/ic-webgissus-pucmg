@@ -1,0 +1,73 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.csr.html",
+  "assetGroups": [
+    {
+      "name": "app-shell",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.csr.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/icons/**",
+          "/og.png",
+          "/**/*.(svg|png|jpg|jpeg|webp|gif|woff|woff2)",
+          "/maplibre/**"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-freshness",
+      "urls": [
+        "/api/meta",
+        "/api/regioes",
+        "/api/municipios",
+        "/api/municipios?**",
+        "/api/municipios/*",
+        "/api/municipios/*/estabelecimentos",
+        "/api/estabelecimentos/???????",
+        "/api/estabelecimentos/busca?**"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "timeout": "5s",
+        "maxSize": 150,
+        "maxAge": "1d"
+      }
+    },
+    {
+      "name": "tiles-performance",
+      "urls": [
+        "/tiles/municipios.pmtiles",
+        "/tiles/regioes.pmtiles"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 4,
+        "maxAge": "7d"
+      }
+    }
+  ],
+  "navigationUrls": [
+    "/**",
+    "!/**/*.*",
+    "!/**/*__*",
+    "!/**/*__*/**",
+    "!/api/**",
+    "!/tiles/**"
+  ]
+}

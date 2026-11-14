@@ -1,1 +1,8 @@
-<app-mapa />
+<a class="pular" href="#principal">Pular para o conteúdo</a>
+@if (estatica()) {
+  <router-outlet />
+} @else {
+  <main id="principal" tabindex="-1">
+    <app-mapa />
+  </main>
+}

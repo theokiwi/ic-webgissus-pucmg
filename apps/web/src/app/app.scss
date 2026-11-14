@@ -1,0 +1,6 @@
+.pular {
+  position: absolute; z-index: 1000; left: 8px; top: -60px; padding: 0.75rem 1rem;
+  background: #fff; color: #0b3d91; font-weight: 600; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+.pular:focus { top: 8px; }
+main { display: block; outline: none; }
