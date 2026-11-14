@@ -35,4 +35,7 @@ Variáveis de ambiente (lidas de `.env` em `apps/api` ou na raiz):
 | `PORT` | `3000` | porta HTTP |
 | `CORS_ORIGIN` | `http://localhost:4200` | origens liberadas (lista separada por vírgula) |
 | `TILES_DIR` | `<repo>/data/processed/tiles` | diretório servido em `/tiles` |
-| `VALHALLA_URL` | (vazio) | base do Valhalla; sem ela `/api/rota` → 503 |
+| `VALHALLA_URL` | (vazio) | base do Valhalla; sem ela `/api/rota` → 503 e `/api/meta` traz `rotas: false` |
+| `PG_POOL_MAX` | `10` | conexões por instância (3 na Vercel) |
+
+Na Vercel (ADR 0007) a entrada é `src/vercel.ts`, empacotada por `infra/vercel/build.mjs`; sem tiles nem Swagger.

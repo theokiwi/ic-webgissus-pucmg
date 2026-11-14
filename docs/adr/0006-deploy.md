@@ -1,6 +1,6 @@
 # 0006 — Deploy: Docker Compose + Caddy em VPS ou servidor da universidade
 
-Status: Aceito
+Status: Substituído por [0007](0007-deploy-vercel-neon.md) como deploy padrão (continua válido para VPS)
 
 ## Contexto
 
