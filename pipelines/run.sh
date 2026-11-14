@@ -9,6 +9,7 @@ docker build -q --network host -t "$IMAGE" pipelines >/dev/null
 docker run --rm --network host \
   --user "$(id -u):$(id -g)" \
   --memory 3g \
+  ${DATABASE_URL:+-e DATABASE_URL} \
   -v "$PWD/data:/repo/data" \
   -v "$PWD/docs:/repo/docs" \
   -v "$PWD/pipelines:/repo/pipelines:ro" \
