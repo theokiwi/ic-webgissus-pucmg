@@ -1,8 +1,9 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
-  // Só a página inicial é pré-renderizada; as rotas com parâmetro vão por SSR
-  // (a fase 6 gera meta tags OG para elas).
-  { path: '', renderMode: RenderMode.Prerender },
+  // Páginas estáticas, prerenderizadas no build (o PUBLIC_URL do build vai para og:url/og:image).
+  { path: 'sobre', renderMode: RenderMode.Prerender },
+  { path: 'privacidade', renderMode: RenderMode.Prerender },
+  // Demais rotas por SSR: as metas Open Graph dependem da API e de PUBLIC_URL em tempo de execução.
   { path: '**', renderMode: RenderMode.Server },
 ];

@@ -6,6 +6,8 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -13,16 +15,58 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Proxy de /api e /tiles para a API (`API_URL`), para que o site rode numa única origem.
+ * Repassa método, Range e validadores condicionais; devolve status e cabeçalhos de cache/intervalo
+ * e transmite o corpo em stream (os PMTiles têm centenas de MB).
  */
+const API_URL = (process.env['API_URL'] || 'http://localhost:3000').replace(/\/+$/, '');
+const CABECALHOS_PEDIDO = ['accept', 'range', 'if-range', 'if-none-match', 'if-modified-since', 'user-agent'];
+const CABECALHOS_RESPOSTA = [
+  'content-type',
+  'content-length',
+  'content-range',
+  'accept-ranges',
+  'etag',
+  'last-modified',
+  'cache-control',
+  'vary',
+];
+
+async function repassar(req: express.Request, res: express.Response): Promise<void> {
+  const cabecalhos: Record<string, string> = { 'accept-encoding': 'identity' };
+  for (const nome of CABECALHOS_PEDIDO) {
+    const v = req.headers[nome];
+    if (typeof v === 'string') cabecalhos[nome] = v;
+  }
+  const abortar = new AbortController();
+  res.on('close', () => abortar.abort());
+  try {
+    const resposta = await fetch(API_URL + req.originalUrl, {
+      method: req.method,
+      headers: cabecalhos,
+      signal: abortar.signal,
+    });
+    res.status(resposta.status);
+    for (const nome of CABECALHOS_RESPOSTA) {
+      const v = resposta.headers.get(nome);
+      if (v !== null) res.setHeader(nome, v);
+    }
+    if (!resposta.body || req.method === 'HEAD') {
+      res.end();
+      return;
+    }
+    await pipeline(Readable.fromWeb(resposta.body as import('node:stream/web').ReadableStream), res);
+  } catch (erro) {
+    if (abortar.signal.aborted) return; // o cliente desistiu
+    if (!res.headersSent) res.status(502).json({ statusCode: 502, message: 'API indisponível' });
+    else res.destroy(erro as Error);
+  }
+}
+
+app.use(['/api', '/tiles'], (req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  void repassar(req, res);
+});
 
 /**
  * Serve static files from /browser
@@ -32,6 +76,14 @@ app.use(
     maxAge: '1y',
     index: false,
     redirect: false,
+    setHeaders: (res, caminho) => {
+      // Arquivos sem hash no nome: o service worker precisa revalidar sempre para detectar versões novas.
+      if (/(ngsw\.json|ngsw-worker\.js|safety-worker\.js|worker-basic\.min\.js|manifest\.webmanifest)$/.test(caminho)) {
+        res.setHeader('Cache-Control', 'no-cache');
+      } else if (/\.(png|ico|svg)$/.test(caminho) && !/-[A-Z0-9]{8}\./.test(caminho)) {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+      }
+    },
   }),
 );
 

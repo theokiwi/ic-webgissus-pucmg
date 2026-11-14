@@ -10,6 +10,6 @@
     { "slug": "farmacia", "rotulo": "Farmácia", "cor": "#558b2f" },
     { "slug": "vacinacao", "rotulo": "Vacinação", "cor": "#ad1457" },
     { "slug": "hemocentro", "rotulo": "Hemocentro (doação de sangue)", "cor": "#8e0000" },
-    { "slug": "promocao_saude", "rotulo": "Academia da Saúde e promoção", "cor": "#9e9d24" }
+    { "slug": "promocao_saude", "rotulo": "Academia da Saúde e promoção", "cor": "#827717" }
   ]
 }

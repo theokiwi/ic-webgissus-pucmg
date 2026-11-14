@@ -1,0 +1,85 @@
+# Produção (ADR 0006). Uso, a partir da raiz:
+#   cp infra/env.prod.example infra/.env.prod   # ajustar DOMINIO e senhas
+#   docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod up -d --build
+name: webgissus-prod
+
+services:
+  db:
+    image: postgis/postgis:17-3.6
+    environment:
+      POSTGRES_DB: webgissus
+      POSTGRES_USER: webgissus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webgissus -d webgissus"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  valhalla:
+    image: ghcr.io/valhalla/valhalla-scripted:3.9.1
+    command: ["build_tiles"]
+    environment:
+      use_tiles_ignore_pbf: "True"
+      force_rebuild: "False"
+      build_tar: "False"
+      build_admins: "False"
+      build_time_zones: "False"
+      serve_tiles: "True"
+      server_threads: "${VALHALLA_THREADS:-4}"
+    volumes:
+      - ../data/processed/valhalla:/custom_files
+    mem_limit: 2g
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgres://webgissus:${POSTGRES_PASSWORD}@db:5432/webgissus
+      VALHALLA_URL: http://valhalla:8002
+      TILES_DIR: /data/tiles
+      CORS_ORIGIN: https://${DOMINIO:?defina DOMINIO}
+    volumes:
+      - ../data/processed/tiles:/data/tiles:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        PUBLIC_URL: https://${DOMINIO}
+    environment:
+      PUBLIC_URL: https://${DOMINIO}
+      API_URL: http://api:3000
+      NG_ALLOWED_HOSTS: ${DOMINIO}
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    environment:
+      DOMINIO: ${DOMINIO}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy_data:
