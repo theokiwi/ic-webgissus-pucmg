@@ -31,6 +31,8 @@ pnpm dev:api                     # http://localhost:3000
 pnpm db:up / db:down             # PostGIS em 127.0.0.1:5432
 pnpm rotas:preparar              # baixa OSM, recorta MG e gera tiles do Valhalla (~min, 4 GB RAM)
 pnpm rotas:up / rotas:down       # Valhalla em 127.0.0.1:8002 (perfil `rotas`; VALHALLA_URL na API)
+pnpm banco:publicar              # copia o PostGIS local para o Neon (.env.vercel)
+pnpm deploy:vercel               # build + deploy de produção na Vercel (ADR 0007)
 pipelines/run.sh spike/explorar_cnes.py 202609   # roda script Python no container
 pipelines/test.sh                                # pytest dos pipelines
 ```

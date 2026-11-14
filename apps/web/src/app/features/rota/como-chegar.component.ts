@@ -20,72 +20,76 @@ const MODOS: { modo: ModoRota; rotulo: string }[] = [
     } @else {
       <section class="rota" aria-labelledby="h-chegar">
         <h3 id="h-chegar">Como chegar</h3>
-        <div class="modos" role="group" aria-label="Modo de deslocamento">
-          @for (m of modos; track m.modo) {
-            <button
-              type="button"
-              class="modo"
-              [class.ativo]="modoAtual() === m.modo"
-              [attr.aria-pressed]="modoAtual() === m.modo"
-              (click)="estado.comoChegar(m.modo)"
-            >
-              {{ m.rotulo }}
-            </button>
-          }
-        </div>
-
-        <div aria-live="polite">
-          @if (!modoRota()) {
-            <p class="muted">Escolha como você vai: usamos sua localização como ponto de partida.</p>
-          } @else if (!de()) {
-            @if (loc.status() === 'buscando') {
-              <p class="muted">Obtendo sua localização…</p>
-            } @else {
-              @if (loc.erro(); as e) {
-                <p class="erro" role="alert">{{ e }}</p>
-              } @else {
-                <p class="muted">Precisamos do ponto de partida.</p>
-              }
-              <div class="acoes">
-                <button type="button" class="btn sec" (click)="estado.comoChegar(modoRota()!)">Tentar de novo</button>
-                <button type="button" class="btn sec" (click)="estado.escolherNoMapa('rota')">Tocar no mapa</button>
-              </div>
+        @if (disponivel()) {
+          <div class="modos" role="group" aria-label="Modo de deslocamento">
+            @for (m of modos; track m.modo) {
+              <button
+                type="button"
+                class="modo"
+                [class.ativo]="modoAtual() === m.modo"
+                [attr.aria-pressed]="modoAtual() === m.modo"
+                (click)="estado.comoChegar(m.modo)"
+              >
+                {{ m.rotulo }}
+              </button>
             }
-          } @else if (calculo.carregando()) {
-            <p class="muted">Calculando a rota…</p>
-          } @else if (calculo.erro(); as e) {
-            <p class="erro" role="alert">{{ e }}</p>
-            @if (e !== indisponivel) {
-              <button type="button" class="btn sec" (click)="estado.tentarNovamente()">Tentar novamente</button>
-            }
-          } @else if (calculo.dado(); as r) {
-            <p class="resumo" role="status">
-              <b>{{ dist(r.distanciaM) }}</b> · <b>{{ tempo(r.duracaoS) }}</b>
-              <span class="muted"> ({{ rotuloModo() }})</span>
-            </p>
-            <details class="passos">
-              <summary>Instruções passo a passo ({{ r.passos.length }})</summary>
-              <ol>
-                @for (p of r.passos; track $index) {
-                  <li>
-                    {{ p.instrucao }}
-                    @if (p.distanciaM > 0) {
-                      <span class="muted"> · {{ dist(p.distanciaM) }}</span>
-                    }
-                  </li>
-                }
-              </ol>
-            </details>
-          }
-        </div>
-
-        @if (de()) {
-          <div class="acoes">
-            <button type="button" class="btn sec" (click)="estado.escolherNoMapa('rota')">Mudar ponto de partida</button>
           </div>
-        }
-        @if (modoRota()) {
-          <button type="button" class="btn sec limpar" (click)="limpar()">Limpar rota</button>
+  
+          <div aria-live="polite">
+            @if (!modoRota()) {
+              <p class="muted">Escolha como você vai: usamos sua localização como ponto de partida.</p>
+            } @else if (!de()) {
+              @if (loc.status() === 'buscando') {
+                <p class="muted">Obtendo sua localização…</p>
+              } @else {
+                @if (loc.erro(); as e) {
+                  <p class="erro" role="alert">{{ e }}</p>
+                } @else {
+                  <p class="muted">Precisamos do ponto de partida.</p>
+                }
+                <div class="acoes">
+                  <button type="button" class="btn sec" (click)="estado.comoChegar(modoRota()!)">Tentar de novo</button>
+                  <button type="button" class="btn sec" (click)="estado.escolherNoMapa('rota')">Tocar no mapa</button>
+                </div>
+              }
+            } @else if (calculo.carregando()) {
+              <p class="muted">Calculando a rota…</p>
+            } @else if (calculo.erro(); as e) {
+              <p class="erro" role="alert">{{ e }}</p>
+              @if (e !== indisponivel) {
+                <button type="button" class="btn sec" (click)="estado.tentarNovamente()">Tentar novamente</button>
+              }
+            } @else if (calculo.dado(); as r) {
+              <p class="resumo" role="status">
+                <b>{{ dist(r.distanciaM) }}</b> · <b>{{ tempo(r.duracaoS) }}</b>
+                <span class="muted"> ({{ rotuloModo() }})</span>
+              </p>
+              <details class="passos">
+                <summary>Instruções passo a passo ({{ r.passos.length }})</summary>
+                <ol>
+                  @for (p of r.passos; track $index) {
+                    <li>
+                      {{ p.instrucao }}
+                      @if (p.distanciaM > 0) {
+                        <span class="muted"> · {{ dist(p.distanciaM) }}</span>
+                      }
+                    </li>
+                  }
+                </ol>
+              </details>
+            }
+          </div>
+  
+          @if (de()) {
+            <div class="acoes">
+              <button type="button" class="btn sec" (click)="estado.escolherNoMapa('rota')">Mudar ponto de partida</button>
+            </div>
+          }
+          @if (modoRota()) {
+            <button type="button" class="btn sec limpar" (click)="limpar()">Limpar rota</button>
+          }
+        } @else {
+          <p class="muted">Veja o trajeto no seu app de mapas:</p>
         }
 
         @if (links(); as l) {
@@ -132,6 +136,7 @@ export class ComoChegarComponent {
   protected readonly dist = distancia;
   protected readonly tempo = duracao;
   protected readonly aberto = signal(false);
+  protected readonly disponivel = this.estado.rotasDisponiveis;
 
   protected readonly modoRota = computed(() => this.estado.rota().modoRota);
   protected readonly de = computed(() => this.estado.rota().de);

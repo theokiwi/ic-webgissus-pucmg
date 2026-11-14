@@ -29,11 +29,16 @@ export class Db implements OnApplicationShutdown {
     {
       provide: PG_POOL,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) =>
-        new pg.Pool({
+      useFactory: (config: ConfigService) => {
+        const pool = new pg.Pool({
           connectionString: config.get<string>('DATABASE_URL') ?? DATABASE_URL_PADRAO,
-          max: 10,
-        }),
+          // Em funções serverless (Vercel) cada instância precisa de poucas conexões.
+          max: Number(config.get<string>('PG_POOL_MAX') ?? 10),
+        });
+        // Bancos gerenciados (Neon) encerram conexões ociosas; sem este listener o erro derruba o processo.
+        pool.on('error', (erro) => console.error('[pg] conexão ociosa encerrada:', erro.message));
+        return pool;
+      },
     },
     Db,
   ],

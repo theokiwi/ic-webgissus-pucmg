@@ -91,11 +91,13 @@ export class EstadoService {
   );
 
   // --- rota até o estabelecimento da ficha ---
+  /** O servidor desenha rotas (Valhalla)? Sem isso, "Como chegar" oferece só os links externos. */
+  readonly rotasDisponiveis = computed(() => this.meta.dado()?.rotas === true);
   private readonly chaveRota = computed(
     () => {
       const r = this.rota();
       const f = this.ficha.dado();
-      if (!this.navegador || r.visao !== 'estabelecimento' || !r.modoRota || !r.de || !f) return null;
+      if (!this.navegador || !this.rotasDisponiveis() || r.visao !== 'estabelecimento' || !r.modoRota || !r.de || !f) return null;
       return { modo: r.modoRota, de: r.de, para: { lat: f.lat, lon: f.lon }, tentativa: this.tentativa() };
     },
     { equal: iguais },

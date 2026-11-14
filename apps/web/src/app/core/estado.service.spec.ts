@@ -91,10 +91,24 @@ describe('EstadoService', () => {
     expect(router.url).toBe('/estabelecimento/2695324');
   });
 
+  it('sem rotas no servidor (meta.rotas = false) não chama /api/rota', async () => {
+    await router.navigateByUrl('/estabelecimento/2695324?rota=auto&de=-19.9191,-43.9386');
+    TestBed.tick();
+    await new Promise((r) => setTimeout(r));
+    http.expectOne('/api/meta').flush({ rotas: false });
+    http.expectOne('/api/estabelecimentos/2695324').flush({ cnes: '2695324', lat: -19.93, lon: -43.95, municipio: { cd: '3106200', nome: 'BH' } });
+    TestBed.tick();
+    await new Promise((r) => setTimeout(r));
+    http.match((r) => r.url.startsWith('/api/municipios'));
+    http.expectNone((r) => r.url === '/api/rota');
+    expect(estado.rotasDisponiveis()).toBe(false);
+  });
+
   it('rota com 503 vira mensagem de indisponibilidade', async () => {
     await router.navigateByUrl('/estabelecimento/2695324?rota=auto&de=-19.9191,-43.9386');
     TestBed.tick();
     await new Promise((r) => setTimeout(r));
+    http.expectOne('/api/meta').flush({ rotas: true });
     http.expectOne('/api/estabelecimentos/2695324').flush({ cnes: '2695324', lat: -19.93, lon: -43.95, municipio: { cd: '3106200', nome: 'BH' } });
     TestBed.tick();
     await new Promise((r) => setTimeout(r));

@@ -87,6 +87,7 @@ describe('health e meta', () => {
     expect(r.body.porCategoria.atencao_basica).toBe(2);
     expect(r.body.porCategoria.hospital).toBe(1);
     expect(Object.keys(r.body.porCategoria)).toHaveLength(10);
+    expect(typeof r.body.rotas).toBe('boolean');
   });
 });
 

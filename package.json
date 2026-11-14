@@ -16,9 +16,14 @@
     "db:down": "docker compose -f infra/docker-compose.yml down",
     "rotas:preparar": "infra/valhalla/preparar.sh",
     "rotas:up": "docker compose -f infra/docker-compose.yml --profile rotas up -d valhalla",
-    "rotas:down": "docker compose -f infra/docker-compose.yml --profile rotas stop valhalla"
+    "rotas:down": "docker compose -f infra/docker-compose.yml --profile rotas stop valhalla",
+    "build:vercel": "node infra/vercel/build.mjs",
+    "deploy:vercel": "infra/vercel/deploy.sh",
+    "banco:publicar": "infra/vercel/publicar-banco.sh"
   },
   "devDependencies": {
-    "@playwright/test": "^1.65.1"
+    "@playwright/test": "^1.65.1",
+    "esbuild": "0.28.2",
+    "vercel": "^65.15.0"
   }
 }

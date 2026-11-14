@@ -8,6 +8,10 @@ export const TILES_DIR_PADRAO = resolve(import.meta.dirname, '../../../data/proc
 export interface OpcoesApp {
   tilesDir?: string;
   corsOrigin?: string;
+  /** Serve /tiles a partir de `tilesDir` (padrão true). Na Vercel os tiles são arquivos estáticos da CDN. */
+  servirTiles?: boolean;
+  /** Publica a documentação Swagger em /api/docs (padrão true). */
+  documentacao?: boolean;
 }
 
 /** Configuração HTTP comum a main.ts e aos testes e2e. */
@@ -26,12 +30,15 @@ export function configurarApp(app: NestExpressApplication, opcoes: OpcoesApp = {
   });
 
   // Tiles PMTiles: express.static (send) já responde a HTTP Range (206).
-  app.useStaticAssets(resolve(tilesDir), {
-    prefix: '/tiles',
-    etag: true,
-    setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=3600'),
-  });
+  if (opcoes.servirTiles !== false) {
+    app.useStaticAssets(resolve(tilesDir), {
+      prefix: '/tiles',
+      etag: true,
+      setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=3600'),
+    });
+  }
 
+  if (opcoes.documentacao === false) return app;
   const doc = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
