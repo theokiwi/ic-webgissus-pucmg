@@ -1,12 +1,11 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { MapaComponent } from './features/mapa/mapa.component';
 
 @Component({
-  imports: [RouterOutlet],
+  imports: [MapaComponent],
   selector: 'app-root',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
   templateUrl: './app.html',
 })
-export class App {
-  protected readonly title = signal('web');
-}
+export class App {}
