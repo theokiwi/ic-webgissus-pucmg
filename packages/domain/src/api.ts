@@ -10,6 +10,8 @@ export interface MetaDTO {
   atualizadoEm: string; // ISO 8601 da carga
   totais: { municipios: number; estabelecimentos: number; populacao: number };
   porCategoria: Record<CategoriaSlug, number>;
+  /** true quando o servidor calcula e desenha rotas (Valhalla configurado); senão o site só oferece links externos. */
+  rotas: boolean;
 }
 
 /** GET /api/regioes — macrorregiões com suas regiões de saúde (sem geometria). */

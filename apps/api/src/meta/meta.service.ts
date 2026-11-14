@@ -1,11 +1,15 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { CategoriaSlug, MetaDTO } from '@webgissus/domain';
 import { SLUGS_CATEGORIA } from '../common/categorias.js';
 import { MetaRepository } from './meta.repository.js';
 
 @Injectable()
 export class MetaService {
-  constructor(@Inject(MetaRepository) private readonly repo: MetaRepository) {}
+  constructor(
+    @Inject(MetaRepository) private readonly repo: MetaRepository,
+    @Inject(ConfigService) private readonly config: ConfigService,
+  ) {}
 
   async obter(): Promise<MetaDTO> {
     const carga = await this.repo.ultimaCarga();
@@ -21,6 +25,7 @@ export class MetaService {
       atualizadoEm: carga.atualizado_em.toISOString(),
       totais,
       porCategoria,
+      rotas: Boolean(this.config.get<string>('VALHALLA_URL')),
     };
   }
 }
