@@ -1,19 +1,34 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, Injectable, linkedSignal, PLATFORM_ID, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import type { BBox, CategoriaSlug, MacrorregiaoDTO, MunicipioResumoDTO } from '@webgissus/domain';
+import type { BBox, CategoriaSlug, MacrorregiaoDTO, ModoRota, MunicipioResumoDTO, ProximoDTO } from '@webgissus/domain';
 import { normalizar } from '../shared/formatadores';
 import { ApiService } from './api.service';
-import { carregar } from './carregar';
+import { HttpErrorResponse } from '@angular/common/http';
+import { carregar, mensagemDeErro } from './carregar';
 import { calcularQuebras } from './escala';
-import { montarUrl, parseRota, type EstadoRota } from './estado-url';
+import { arredondarCoord, montarUrl, parseRota, type EstadoRota, type Ponto } from './estado-url';
 import type { PontoFeature } from './geojson';
+import { LocalizacaoService } from './localizacao.service';
 import { temaPorId, valorTema, type TemaId } from './temas';
 
 /** Caixa envolvente aproximada de Minas Gerais. */
 export const BBOX_MG: BBox = [-51.05, -22.93, -39.85, -14.22];
 
 export const LIMITE_LISTA = 100;
+
+/** Mensagem exibida quando a API de rotas responde 503 (Valhalla fora do ar ou sem trajeto). */
+export const MSG_ROTA_INDISPONIVEL =
+  'O cálculo de rotas está indisponível no momento. Você ainda pode abrir o destino no app de mapas.';
+
+export function mensagemDeErroRota(e: unknown): string {
+  if (e instanceof HttpErrorResponse && (e.status === 503 || e.status === 504 || e.status === 0)) return MSG_ROTA_INDISPONIVEL;
+  return mensagemDeErro(e);
+}
+
+const iguais = <T>(a: T, b: T): boolean => JSON.stringify(a) === JSON.stringify(b);
+
+const ARREDONDA = (p: Ponto): Ponto => ({ lat: arredondarCoord(p.lat), lon: arredondarCoord(p.lon) });
 
 export interface Selecao {
   macro: string | null;
@@ -30,6 +45,11 @@ export class EstadoService {
   private readonly router = inject(Router);
   private readonly api = inject(ApiService);
   private readonly navegador = isPlatformBrowser(inject(PLATFORM_ID));
+  readonly localizacao = inject(LocalizacaoService);
+  /** Zoom atual do mapa (alimentado pelo controlador); decide se os setores já aparecem. */
+  readonly zoomMapa = signal(0);
+  /** URL de onde a ficha foi aberta, quando veio de "Perto de mim" (para o botão voltar). */
+  private voltarPara: string | null = null;
 
   readonly rota = signal<EstadoRota>(parseRota(this.router.url));
   private readonly tentativa = signal(1);
@@ -56,6 +76,31 @@ export class EstadoService {
   });
   readonly municipio = carregar(this.cdMunicipio, (cd) => this.api.municipio(cd));
   readonly pontos = carregar(this.cdMunicipio, (cd) => this.api.estabelecimentosDoMunicipio(cd));
+
+  // --- perto de mim ---
+  private readonly chavePerto = computed(
+    () => {
+      const r = this.rota();
+      if (!this.navegador || r.visao !== 'perto' || !r.ponto) return null;
+      return { ...r.ponto, cat: r.cat, raio: r.raio, tentativa: this.tentativa() };
+    },
+    { equal: iguais },
+  );
+  readonly perto = carregar(this.chavePerto, (k) =>
+    this.api.proximos(k.lat, k.lon, { categoria: k.cat, limite: 20, raioKm: k.raio }),
+  );
+
+  // --- rota até o estabelecimento da ficha ---
+  private readonly chaveRota = computed(
+    () => {
+      const r = this.rota();
+      const f = this.ficha.dado();
+      if (!this.navegador || r.visao !== 'estabelecimento' || !r.modoRota || !r.de || !f) return null;
+      return { modo: r.modoRota, de: r.de, para: { lat: f.lat, lon: f.lon }, tentativa: this.tentativa() };
+    },
+    { equal: iguais },
+  );
+  readonly rotaCalculada = carregar(this.chaveRota, (k) => this.api.rota(k.de, k.para, k.modo), mensagemDeErroRota);
 
   // --- derivados ---
   readonly tema = computed(() => this.rota().tema);
@@ -233,11 +278,18 @@ export class EstadoService {
   }
 
   abrirEstabelecimento(cnes: string): void {
-    this.ir({ visao: 'estabelecimento', cnes, cd: null });
+    this.voltarPara = this.rota().visao === 'perto' ? this.router.url : null;
+    this.ir({ visao: 'estabelecimento', cnes, cd: null, modoRota: null, de: null });
   }
 
   /** Fecha a ficha e volta ao município (mantendo filtros), ou a MG se não houver município. */
   fecharFicha(): void {
+    if (this.voltarPara) {
+      const url = this.voltarPara;
+      this.voltarPara = null;
+      void this.router.navigateByUrl(url);
+      return;
+    }
     const cd = this.cdMunicipio();
     if (cd) this.ir({ visao: 'municipio', cd, cnes: null });
     else this.irParaMg();
@@ -246,5 +298,70 @@ export class EstadoService {
   /** "Limpar": volta à visão inicial de MG, sem seleção nem filtros (o tema é mantido). */
   limpar(): void {
     this.irParaMg();
+  }
+
+  // --- perto de mim ---
+
+  /** Abre a visão "perto" num ponto (arredondado a 4 casas); sem ponto, mostra as opções para obtê-lo. */
+  irParaPerto(ponto: Ponto | null, substituir = false): void {
+    this.ir(
+      { visao: 'perto', cd: null, cnes: null, cat: null, q: '', raio: 30, modoRota: null, de: null, ponto: ponto && ARREDONDA(ponto) },
+      substituir,
+    );
+  }
+
+  /** "Perto de mim": abre o painel e pede a localização ao navegador. */
+  async pertoDeMim(): Promise<void> {
+    this.localizacao.cancelarEscolha();
+    this.irParaPerto(null);
+    const p = await this.localizacao.obter();
+    if (p) this.irParaPerto(p, true);
+  }
+
+  /** Atualiza a posição do painel "perto" via GPS. */
+  async atualizarPosicao(): Promise<void> {
+    const p = await this.localizacao.obter();
+    if (p) this.irParaPerto(p, true);
+  }
+
+  ampliarRaio(): void {
+    this.ir({ raio: 100 }, true);
+  }
+
+  escolherNoMapa(para: 'perto' | 'rota'): void {
+    this.localizacao.iniciarEscolha(para);
+  }
+
+  /** "Usar este ponto": aplica o ponto tocado no mapa ao que pediu a escolha. */
+  confirmarPontoTocado(): void {
+    const p = this.localizacao.pontoTocado();
+    const para = this.localizacao.escolhendo();
+    this.localizacao.cancelarEscolha();
+    if (!p || !para) return;
+    if (para === 'perto') this.irParaPerto(p, this.rota().visao === 'perto');
+    else this.ir({ modoRota: this.rota().modoRota ?? 'auto', de: ARREDONDA(p) }, true);
+  }
+
+  // --- rotas ---
+
+  /** Escolhe o modo e calcula a rota; sem origem conhecida, pede a localização. */
+  async comoChegar(modo: ModoRota): Promise<void> {
+    const r = this.rota();
+    let de: Ponto | null = r.de ?? this.localizacao.posicao();
+    if (!de) {
+      this.ir({ modoRota: modo, de: null }, true);
+      de = await this.localizacao.obter();
+    }
+    this.ir({ modoRota: modo, de: de && ARREDONDA(de) }, true);
+  }
+
+  limparRota(): void {
+    this.ir({ modoRota: null, de: null }, true);
+  }
+
+  // --- setores ---
+
+  definirSetores(ligado: boolean): void {
+    this.ir({ setores: ligado }, true);
   }
 }

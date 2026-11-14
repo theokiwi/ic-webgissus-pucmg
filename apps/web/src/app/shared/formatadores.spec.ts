@@ -1,4 +1,4 @@
-import { competenciaIso, decimal, enderecoLinhas, normalizar, numero, telefone, telefoneDigitos } from './formatadores';
+import { competenciaIso, decimal, distancia, duracao, enderecoLinhas, normalizar, numero, telefone, telefoneDigitos } from './formatadores';
 
 describe('formatadores pt-BR', () => {
   it('numero usa ponto como separador de milhar', () => {
@@ -27,5 +27,21 @@ describe('formatadores pt-BR', () => {
   });
   it('normalizar remove acentos e caixa', () => {
     expect(normalizar('  São João  ')).toBe('sao joao');
+  });
+
+  it('distância em m e km', () => {
+    expect(distancia(28)).toBe('28 m');
+    expect(distancia(186)).toBe('190 m');
+    expect(distancia(996)).toBe('1,0 km');
+    expect(distancia(1234)).toBe('1,2 km');
+    expect(distancia(12_345)).toBe('12 km');
+    expect(distancia(null)).toBe('—');
+  });
+  it('duração em min e h', () => {
+    expect(duracao(20)).toBe('menos de 1 min');
+    expect(duracao(505)).toBe('8 min');
+    expect(duracao(3600)).toBe('1 h');
+    expect(duracao(3900)).toBe('1 h 05 min');
+    expect(duracao(-1)).toBe('—');
   });
 });

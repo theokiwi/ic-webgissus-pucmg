@@ -55,6 +55,38 @@ describe('ApiService', () => {
     req.flush([]);
   });
 
+  it('GET proximos envia ponto, categoria, limite e raio', () => {
+    let n = 0;
+    api.proximos(-19.9191, -43.9386, { categoria: 'urgencia', limite: 20, raioKm: 30 }).subscribe((v) => (n = v.length));
+    const req = http.expectOne((r) => r.url === '/api/estabelecimentos/proximos');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('lat')).toBe('-19.9191');
+    expect(req.request.params.get('lon')).toBe('-43.9386');
+    expect(req.request.params.get('categoria')).toBe('urgencia');
+    expect(req.request.params.get('limite')).toBe('20');
+    expect(req.request.params.get('raioKm')).toBe('30');
+    req.flush([{ cnes: '1' }]);
+    expect(n).toBe(1);
+  });
+
+  it('GET proximos usa limite 20 e raio 30 por padrão e omite categoria', () => {
+    api.proximos(1, 2).subscribe();
+    const req = http.expectOne((r) => r.url === '/api/estabelecimentos/proximos');
+    expect(req.request.params.has('categoria')).toBe(false);
+    expect(req.request.params.get('limite')).toBe('20');
+    expect(req.request.params.get('raioKm')).toBe('30');
+    req.flush([]);
+  });
+
+  it('GET rota envia de, para e modo', () => {
+    api.rota({ lat: -19.9, lon: -43.9 }, { lat: -19.93, lon: -43.95 }, 'pedestre').subscribe();
+    const req = http.expectOne((r) => r.url === '/api/rota');
+    expect(req.request.params.get('de')).toBe('-19.9,-43.9');
+    expect(req.request.params.get('para')).toBe('-19.93,-43.95');
+    expect(req.request.params.get('modo')).toBe('pedestre');
+    req.flush({});
+  });
+
   it('propaga erro HTTP', () => {
     let status = 0;
     api.meta().subscribe({ error: (e) => (status = e.status) });
