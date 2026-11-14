@@ -1,0 +1,23 @@
+# deps / build
+node_modules/
+dist/
+.angular/
+coverage/
+*.tsbuildinfo
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# dados (nunca versionar dados brutos ou gerados)
+data/raw/
+data/interim/
+data/processed/
+*.pmtiles
+
+# ambiente
+.env
+.env.*
+!.env.example
+.DS_Store
