@@ -1,0 +1,129 @@
+/**
+ * Contrato HTTP entre apps/api e apps/web. Prefixo de todas as rotas: /api
+ * Esquema do banco correspondente: infra/db/001_schema.sql
+ */
+import type { CategoriaSlug } from './categorias.js';
+
+/** GET /api/meta */
+export interface MetaDTO {
+  competencia: string; // 'AAAAMM'
+  atualizadoEm: string; // ISO 8601 da carga
+  totais: { municipios: number; estabelecimentos: number; populacao: number };
+  porCategoria: Record<CategoriaSlug, number>;
+}
+
+/** GET /api/regioes — macrorregiões com suas regiões de saúde (sem geometria). */
+export interface MacrorregiaoDTO {
+  cd: string;
+  nome: string;
+  bbox: BBox;
+  regioes: { cd: string; nome: string; bbox: BBox }[];
+}
+
+/** [oeste, sul, leste, norte] em graus. */
+export type BBox = [number, number, number, number];
+
+/** GET /api/municipios?macro=&regiao= */
+export interface MunicipioResumoDTO {
+  cd: string; // IBGE 7 dígitos
+  nome: string;
+  cdRegiao: string;
+  cdMacro: string;
+  populacao: number | null;
+  areaKm2: number | null;
+  densidade: number | null;
+  totalEstabelecimentos: number;
+  porCategoria: Partial<Record<CategoriaSlug, number>>;
+}
+
+/** GET /api/municipios/:cd */
+export interface MunicipioDTO extends MunicipioResumoDTO {
+  nomeRegiao: string;
+  nomeMacro: string;
+  bbox: BBox;
+  /** Estabelecimentos por 10 mil habitantes. */
+  estabelecimentosPor10mil: number | null;
+}
+
+/** Propriedades de cada Feature em GET /api/municipios/:cd/estabelecimentos (GeoJSON FeatureCollection<Point>). */
+export interface EstabelecimentoPontoProps {
+  cnes: string;
+  nome: string;
+  categoria: CategoriaSlug;
+  bairro: string | null;
+  sempreAberto: boolean;
+  coordOk: boolean;
+}
+
+export type DiaSemana = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = domingo
+
+export interface HorarioDTO {
+  dia: DiaSemana;
+  abre: string; // 'HH:MM'
+  fecha: string; // 'HH:MM'
+}
+
+/** GET /api/estabelecimentos/:cnes */
+export interface EstabelecimentoDTO {
+  cnes: string;
+  nome: string;
+  razaoSocial: string | null;
+  categoria: CategoriaSlug;
+  tipoUnidade: { codigo: number; descricao: string };
+  municipio: { cd: string; nome: string };
+  endereco: {
+    logradouro: string | null;
+    numero: string | null;
+    complemento: string | null;
+    bairro: string | null;
+    cep: string | null;
+  };
+  telefone: string | null;
+  email: string | null;
+  natureza: 'publica' | 'empresarial' | 'sem_fins_lucrativos' | 'pessoa_fisica' | 'nao_informada';
+  sempreAberto: boolean;
+  turno: string | null;
+  horarios: HorarioDTO[];
+  servicos: { servico: string; classificacao: string | null; sus: boolean }[];
+  atendimentos: { atendimento: string; sus: boolean }[];
+  coordOk: boolean;
+  atualizadoEm: string | null; // 'AAAA-MM-DD'
+  lon: number;
+  lat: number;
+  competencia: string;
+}
+
+/** GET /api/estabelecimentos/proximos?lat=&lon=&categoria=&limite=20&raioKm=30 */
+export interface ProximoDTO extends EstabelecimentoPontoProps {
+  municipio: string;
+  distanciaM: number; // em linha reta
+  lon: number;
+  lat: number;
+  horarios: HorarioDTO[];
+}
+
+/** GET /api/estabelecimentos/busca?q=&limite=10 */
+export interface BuscaItemDTO {
+  cnes: string;
+  nome: string;
+  categoria: CategoriaSlug;
+  municipio: string;
+  bairro: string | null;
+}
+
+export type ModoRota = 'auto' | 'pedestre' | 'bicicleta';
+
+/** GET /api/rota?de=lat,lon&para=lat,lon&modo=auto */
+export interface RotaDTO {
+  modo: ModoRota;
+  distanciaM: number;
+  duracaoS: number;
+  geometria: { type: 'LineString'; coordinates: [number, number][] };
+  passos: { instrucao: string; distanciaM: number; duracaoS: number }[];
+}
+
+/** Corpo de erro padrão. */
+export interface ErroDTO {
+  statusCode: number;
+  message: string;
+}

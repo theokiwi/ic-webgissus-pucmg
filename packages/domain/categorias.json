@@ -1,0 +1,15 @@
+{
+  "_comentario": "Fonte única das categorias exibidas no mapa. Lida pelo ETL (Python) e pelo front/API (TS). Ver docs/adr/0003.",
+  "categorias": [
+    { "slug": "atencao_basica", "rotulo": "Atenção básica (UBS)", "cor": "#2e7d32" },
+    { "slug": "urgencia", "rotulo": "Urgência (UPA/Pronto-socorro)", "cor": "#c62828" },
+    { "slug": "hospital", "rotulo": "Hospital", "cor": "#1565c0" },
+    { "slug": "laboratorio", "rotulo": "Laboratório e exames", "cor": "#6a1b9a" },
+    { "slug": "especialidades", "rotulo": "Especialidades", "cor": "#00838f" },
+    { "slug": "saude_mental", "rotulo": "Saúde mental (CAPS)", "cor": "#ef6c00" },
+    { "slug": "farmacia", "rotulo": "Farmácia", "cor": "#558b2f" },
+    { "slug": "vacinacao", "rotulo": "Vacinação", "cor": "#ad1457" },
+    { "slug": "hemocentro", "rotulo": "Hemocentro (doação de sangue)", "cor": "#8e0000" },
+    { "slug": "promocao_saude", "rotulo": "Academia da Saúde e promoção", "cor": "#9e9d24" }
+  ]
+}
