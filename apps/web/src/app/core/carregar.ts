@@ -29,7 +29,11 @@ export function mensagemDeErro(e: unknown): string {
  * Carrega um recurso sempre que `chave` muda (null = nada a carregar).
  * Requisições obsoletas são canceladas (switchMap). Deve ser chamada em contexto de injeção.
  */
-export function carregar<K, T>(chave: Signal<K | null>, buscar: (k: K) => Observable<T>): Carga<T> {
+export function carregar<K, T>(
+  chave: Signal<K | null>,
+  buscar: (k: K) => Observable<T>,
+  mensagem: (e: unknown) => string = mensagemDeErro,
+): Carga<T> {
   const estado = signal<Passo<T>>({ dado: null, carregando: false, erro: null });
   const destroyRef = inject(DestroyRef);
   toObservable(chave)
@@ -38,7 +42,7 @@ export function carregar<K, T>(chave: Signal<K | null>, buscar: (k: K) => Observ
         if (k === null) return of({ dado: null, carregando: false, erro: null });
         return buscar(k).pipe(
           map((dado) => ({ dado, carregando: false, erro: null })),
-          catchError((e) => of({ dado: null, carregando: false, erro: mensagemDeErro(e) })),
+          catchError((e) => of({ dado: null, carregando: false, erro: mensagem(e) })),
           startWith({ dado: null, carregando: true, erro: null }),
         );
       }),

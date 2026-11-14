@@ -16,19 +16,22 @@ import { BottomSheetComponent, type TamanhoFolha } from '../../shared/bottom-she
 import { TelaService } from '../../shared/tela.service';
 import { FichaComponent } from '../estabelecimento/ficha.component';
 import { PainelMunicipioComponent } from '../municipio/painel-municipio.component';
+import { PainelPertoComponent } from '../perto/painel-perto.component';
 import { MapaController, type Folgas } from './mapa-controller';
 import { PainelMgComponent } from './painel-mg.component';
 
 @Component({
   selector: 'app-mapa',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BottomSheetComponent, PainelMgComponent, PainelMunicipioComponent, FichaComponent],
+  imports: [BottomSheetComponent, PainelMgComponent, PainelMunicipioComponent, PainelPertoComponent, FichaComponent],
   template: `
     <div class="canvas" #canvas role="application" aria-label="Mapa dos estabelecimentos de saúde do SUS em Minas Gerais"></div>
 
     @if (!(tela.pequena() && fichaAberta())) {
       <app-bottom-sheet rotulo="de navegação" [(tamanho)]="tamanhoPainel">
-        @if (emMunicipio()) {
+        @if (emPerto()) {
+          <app-painel-perto />
+        } @else if (emMunicipio()) {
           <app-painel-municipio />
         } @else {
           <app-painel-mg />
@@ -40,6 +43,18 @@ import { PainelMgComponent } from './painel-mg.component';
       <app-bottom-sheet rotulo="do estabelecimento" lado="direita" [(tamanho)]="tamanhoFicha">
         <app-ficha />
       </app-bottom-sheet>
+    }
+
+    @if (loc.escolhendo()) {
+      <div class="barra-escolha" role="region" aria-label="Escolher ponto no mapa">
+        @if (loc.pontoTocado()) {
+          <span>Ponto marcado no mapa.</span>
+          <button type="button" class="btn" (click)="estado.confirmarPontoTocado()">Usar este ponto</button>
+        } @else {
+          <span>Toque no mapa para escolher o ponto.</span>
+        }
+        <button type="button" class="btn sec" (click)="loc.cancelarEscolha()">Cancelar</button>
+      </div>
     }
 
     <div class="carregando" aria-live="polite" role="status">
@@ -68,6 +83,13 @@ import { PainelMgComponent } from './painel-mg.component';
     .giro { width: 16px; height: 16px; border: 3px solid var(--borda-forte); border-top-color: var(--primaria); border-radius: 50%; animation: gira 0.8s linear infinite; }
     @keyframes gira { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .giro { animation-duration: 3s; } }
+    .barra-escolha {
+      position: absolute; z-index: 12; top: 12px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem;
+      max-width: min(92vw, 560px); padding: 0.5rem 0.75rem; border-radius: 12px;
+      background: var(--superficie); color: var(--texto); box-shadow: 0 2px 12px rgba(0,0,0,.35);
+    }
+    @media (max-width: 600px) { .barra-escolha { left: 12px; right: 64px; transform: none; max-width: none; } }
     .faixa-erro {
       position: absolute; z-index: 11; left: 50%; bottom: 16px; transform: translateX(-50%);
       max-width: min(92vw, 520px); display: flex; gap: 0.75rem; align-items: center;
@@ -79,6 +101,7 @@ import { PainelMgComponent } from './painel-mg.component';
 export class MapaComponent {
   protected readonly estado = inject(EstadoService);
   protected readonly tela = inject(TelaService);
+  protected readonly loc = this.estado.localizacao;
 
   private readonly canvas = viewChild.required<ElementRef<HTMLElement>>('canvas');
   private readonly controller = signal<MapaController | null>(null);
@@ -90,7 +113,11 @@ export class MapaComponent {
   protected readonly tamanhoFicha = signal<TamanhoFolha>('meio');
 
   protected readonly fichaAberta = computed(() => this.estado.rota().visao === 'estabelecimento');
+  protected readonly emPerto = computed(() => this.estado.rota().visao === 'perto');
   protected readonly emMunicipio = computed(() => this.estado.cdMunicipio() !== null);
+  private readonly coordenadasRota = computed(() =>
+    this.estado.rota().visao === 'estabelecimento' ? (this.estado.rotaCalculada.dado()?.geometria.coordinates ?? null) : null,
+  );
   private readonly chaveAlvo = computed(() => this.estado.alvo().chave);
 
   constructor() {
@@ -102,6 +129,9 @@ export class MapaComponent {
         const c = await MapaController.criar(this.canvas().nativeElement, {
           verEstabelecimentos: (cd) => this.estado.selecionarMunicipio(cd),
           abrirEstabelecimento: (cnes) => this.estado.abrirEstabelecimento(cnes),
+          pertoDeMim: () => void this.estado.pertoDeMim(),
+          pontoTocado: (lat, lon) => this.loc.pontoTocado.set({ lat, lon }),
+          zoomMudou: (z) => this.estado.zoomMapa.set(Math.round(z * 2) / 2),
           pronto: () => {
             this.pronto.set(true);
             this.iniciando.set(false);
@@ -136,6 +166,49 @@ export class MapaComponent {
     });
     effect(() => {
       const c = comMapa();
+      if (c) c.definirPertoAtivo(this.emPerto());
+    });
+    effect(() => {
+      const c = comMapa();
+      if (c) c.definirSetores(this.estado.rota().setores);
+    });
+    effect(() => {
+      const c = comMapa();
+      const escolhendo = this.loc.escolhendo() !== null;
+      if (c) c.definirEscolha(escolhendo);
+      if (escolhendo && untracked(() => this.tela.pequena())) this.tamanhoPainel.set('recolhido');
+    });
+    effect(() => {
+      const c = comMapa();
+      if (c) c.definirToque(this.loc.pontoTocado());
+    });
+    effect(() => {
+      const c = comMapa();
+      const r = this.estado.rota();
+      if (c) c.definirUsuario(r.visao === 'perto' ? r.ponto : r.visao === 'estabelecimento' ? r.de : null);
+    });
+    effect(() => {
+      const c = comMapa();
+      const perto = this.emPerto() ? this.estado.perto.dado() : null;
+      if (c) c.definirPerto(perto ?? []);
+    });
+    effect(() => {
+      const c = comMapa();
+      const perto = this.emPerto() ? this.estado.perto.dado() : null;
+      const ponto = untracked(() => this.estado.rota().ponto);
+      if (!c || !perto || !ponto) return;
+      const coords: [number, number][] = [[ponto.lon, ponto.lat], ...perto.map((p): [number, number] => [p.lon, p.lat])];
+      untracked(() => c.enquadrarPontos(coords, this.folgas(false), 14));
+    });
+    effect(() => {
+      const c = comMapa();
+      const coords = this.coordenadasRota();
+      if (!c) return;
+      c.definirRota(coords);
+      if (coords) untracked(() => c.enquadrarPontos(coords, this.folgas(true), 17));
+    });
+    effect(() => {
+      const c = comMapa();
       const chave = this.chaveAlvo();
       if (!c || chave === 'pendente' || chave === 'estabelecimento') return;
       untracked(() => c.enquadrar(this.estado.alvo().bbox, this.folgas(false)));
@@ -143,7 +216,8 @@ export class MapaComponent {
     effect(() => {
       const c = comMapa();
       const f = this.estado.ficha.dado();
-      if (c && f) untracked(() => c.focar(f.lon, f.lat, this.folgas(true)));
+      // Com rota desenhada, quem enquadra é o efeito da rota (evita brigar por a câmera).
+      if (c && f) untracked(() => this.coordenadasRota() ?? c.focar(f.lon, f.lat, this.folgas(true)));
     });
   }
 

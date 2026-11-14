@@ -77,3 +77,23 @@ export const ORDEM_DIAS: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
 export function normalizar(s: string): string {
   return s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
 }
+
+/** Distância legível: "850 m", "1,2 km", "12 km". */
+export function distancia(m: number | null | undefined): string {
+  if (typeof m !== 'number' || !Number.isFinite(m) || m < 0) return '—';
+  const metros = m < 100 ? Math.round(m) : Math.round(m / 10) * 10;
+  if (metros < 1000) return `${metros} m`;
+  const km = m / 1000;
+  return `${km >= 10 ? numero(km) : decimal(km, 1)} km`;
+}
+
+/** Duração legível: "menos de 1 min", "8 min", "1 h 05 min". */
+export function duracao(s: number | null | undefined): string {
+  if (typeof s !== 'number' || !Number.isFinite(s) || s < 0) return '—';
+  const min = Math.round(s / 60);
+  if (min < 1) return 'menos de 1 min';
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const r = min % 60;
+  return r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, '0')} min`;
+}

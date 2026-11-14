@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { CATEGORIAS, categoria, type CategoriaSlug } from '@webgissus/domain';
 import { EstadoService } from '../../core/estado.service';
+import { CompartilharComponent } from '../../shared/compartilhar.component';
+import { ControleSetoresComponent } from '../../shared/controle-setores.component';
 import { decimal, numero } from '../../shared/formatadores';
 import { CabecalhoPainelComponent } from '../mapa/cabecalho-painel.component';
 import { SeletoresComponent } from '../mapa/seletores.component';
@@ -10,7 +13,7 @@ const LIMITE_LISTA = 200;
 @Component({
   selector: 'app-painel-municipio',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CabecalhoPainelComponent, SeletoresComponent],
+  imports: [CabecalhoPainelComponent, SeletoresComponent, CompartilharComponent, ControleSetoresComponent],
   template: `
     <app-cabecalho-painel />
     <button type="button" class="btn sec voltar" (click)="estado.irParaMg()">&larr; Voltar para MG</button>
@@ -24,11 +27,13 @@ const LIMITE_LISTA = 200;
         <div><b>{{ num(m.totalEstabelecimentos) }}</b> estabelecimentos</div>
         <div><b>{{ dec(m.estabelecimentosPor10mil) }}</b> por 10 mil hab.</div>
       </section>
+      <app-compartilhar [contexto]="{ tipo: 'municipio', nome: m.nome, totalEstabelecimentos: m.totalEstabelecimentos, populacao: m.populacao }" />
     } @else if (estado.municipio.erro(); as e) {
       <p class="erro" role="alert">{{ e }}</p>
     }
 
     <app-seletores />
+    <app-controle-setores />
 
     <div class="ctrl">
       <label for="filtro-local">Filtrar por nome ou bairro</label>
@@ -81,8 +86,12 @@ const LIMITE_LISTA = 200;
     @if (visiveis().length > lista().length) {
       <p class="muted">Mostrando os {{ lista().length }} primeiros. Use o filtro para refinar.</p>
     }
+    <p class="muted rodape-links">
+      <a routerLink="/sobre">Sobre e fontes dos dados</a> · <a routerLink="/privacidade">Privacidade</a>
+    </p>
   `,
   styles: `
+    .rodape-links { font-size: 0.75rem; }
     .voltar { margin: 0.5rem 0; width: 100%; }
     .titulo { margin: 0.25rem 0 0; font-size: 1.25rem; }
     .sub { margin: 0 0 0.5rem; font-size: 0.8125rem; }
