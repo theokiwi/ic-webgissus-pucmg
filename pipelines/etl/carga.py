@@ -29,7 +29,7 @@ import shapely  # noqa: E402
 from etl import baixar  # noqa: E402
 from etl.classificacao import classificar_tipo_unidade, slugs_validos, tipo_conhecido  # noqa: E402
 from etl.transformacoes import (  # noqa: E402
-    coord_ok_lote, coord_valida, densidade, dia_semana, natureza, numero_br,
+    coord_ok_lote, coord_valida, densidade, dia_semana, nome_macro, nome_regiao, natureza, numero_br,
     para_multipolygon, parse_data_br, parse_hora, por_10mil,
 )
 
@@ -135,16 +135,17 @@ def carregar_territorio(con: duckdb.DuckDBPyConnection) -> dict:
     nomes_reg = con.execute(f"SELECT CO_REGSAUD cd, DS_NOME nome FROM {terr('tb_regsaud.csv')}").df()
     nomes_mac = con.execute(f"SELECT CO_MACSAUD cd, DS_NOME nome FROM {terr('tb_macsaud.csv')}").df()
 
-    def dissolver(col: str, nomes: pd.DataFrame, extra: dict | None = None) -> gpd.GeoDataFrame:
+    def dissolver(col: str, nomes: pd.DataFrame, normaliza) -> gpd.GeoDataFrame:
         g = mun.dissolve(by=col, as_index=False, aggfunc={"populacao": "sum"})[[col, "populacao", "geometry"]]
         g = g.rename(columns={col: "cd"}).merge(nomes, on="cd", how="left")
+        g["nome"] = g["nome"].map(lambda s: normaliza(s) if isinstance(s, str) else s)
         g["geometry"] = [para_multipolygon(x) for x in g.geometry]
         return g
 
-    regioes = dissolver("cd_regiao", nomes_reg)
+    regioes = dissolver("cd_regiao", nomes_reg, nome_regiao)
     regioes = regioes.merge(mun[["cd_regiao", "cd_macro"]].drop_duplicates().rename(columns={"cd_regiao": "cd"}),
                             on="cd", how="left")
-    macros = dissolver("cd_macro", nomes_mac)
+    macros = dissolver("cd_macro", nomes_mac, nome_macro)
     mun["geometry"] = [para_multipolygon(x) for x in mun.geometry]
     return {"municipios": mun, "regioes": regioes, "macros": macros}
 
@@ -371,6 +372,15 @@ def verificar(contagens: dict, universo: int) -> list[str]:
     return erros
 
 
+ROTULOS_HORARIO = {
+    "estabelecimentos_com_horario": "estabelecimentos com horário",
+    "sem_linhas_de_horario": "sem linhas de horário",
+    "sem_horario_e_sem_24h": "sem horário e sem 24h",
+    "linhas_descartadas_dia_invalido": "linhas descartadas: dia inválido",
+    "linhas_descartadas_hora_invalida_ou_truncada": "linhas descartadas: hora inválida ou truncada",
+}
+
+
 def escrever_md(rel: dict, erros: list[str]) -> None:
     def tab(d: dict, c1: str, c2: str = "n") -> list[str]:
         return [f"| {c1} | {c2} |", "|---|---:|"] + [f"| {k} | {v:,} |" for k, v in d.items()]
@@ -410,7 +420,7 @@ def escrever_md(rel: dict, erros: list[str]) -> None:
         f"| {k} | {v['n']} | {v['descricao']} |" for k, v in ex["tipos_fora_do_mapa_por_decisao"].items()]
     h = r["horarios"]
     L += ["", "## Horários\n", "| Item | Valor |", "|---|---:|"] + [
-        f"| {k.replace('_', ' ')} | {v:,} |" for k, v in h.items() if isinstance(v, int)]
+        f"| {ROTULOS_HORARIO.get(k, k.replace('_', ' '))} | {v:,} |" for k, v in h.items() if isinstance(v, int)]
     L += ["", "Sem horário e sem 24h, por categoria:\n", *tab(h["sem_horario_e_sem_24h_por_categoria"], "Categoria"),
           "", "Horários descartados por formato ambíguo/truncado (mais frequentes):\n", "| inicio -> fim | n |", "|---|---:|"] + [
         f"| `{k}` | {v} |" for k, v in h["exemplos_hora_descartada"].items()]

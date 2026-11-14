@@ -6,7 +6,7 @@ import pytest
 from shapely.geometry import MultiPolygon, Point, Polygon, box
 
 from etl.transformacoes import (
-    coord_ok, coord_ok_lote, coord_valida, densidade, dia_semana, natureza,
+    coord_ok, coord_ok_lote, coord_valida, densidade, dia_semana, nome_macro, nome_regiao, natureza,
     numero_br, para_multipolygon, parse_data_br, parse_hora, por_10mil,
 )
 
@@ -102,3 +102,30 @@ def test_numero_br():
     assert numero_br(".") is None
     assert numero_br("...") is None
     assert numero_br(None) is None
+
+
+@pytest.mark.parametrize("bruto,esperado", [
+    ("Belo Horizonte/Nova Lima/Santa Luzia   - MG", "Belo Horizonte/Nova Lima/Santa Luzia"),
+    ("Juiz de Fora - MG", "Juiz de Fora"),
+    ("Varginha-MG", "Varginha"),
+    ("Uberaba  -  MG  ", "Uberaba"),
+    ("Montes  Claros", "Montes Claros"),
+])
+def test_nome_regiao_remove_sufixo_e_colapsa_espacos(bruto, esperado):
+    assert nome_regiao(bruto) == esperado
+
+
+@pytest.mark.parametrize("bruto,esperado", [
+    ("SUL", "Sul"),
+    ("CENTRO SUL", "Centro Sul"),
+    ("TRIANGULO DO NORTE", "Triângulo do Norte"),
+    ("VALE DO ACO", "Vale do Aço"),
+    ("LESTE DO SUL", "Leste do Sul"),
+    ("  NORDESTE ", "Nordeste"),
+])
+def test_nome_macro_acentua_pelo_dicionario(bruto, esperado):
+    assert nome_macro(bruto) == esperado
+
+
+def test_nome_macro_fora_do_dicionario_usa_title():
+    assert nome_macro("  NOVA ZONA  ") == "Nova Zona"
