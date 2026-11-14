@@ -68,3 +68,6 @@ select, input[type='search'], input[type='text'] {
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.01ms !important; }
 }
+
+/* Controle "Perto de mim" do mapa */
+.maplibregl-ctrl button.ctrl-perto { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; }

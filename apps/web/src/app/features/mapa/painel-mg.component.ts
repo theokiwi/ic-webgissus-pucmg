@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { CATEGORIAS } from '@webgissus/domain';
 import { classesLegenda } from '../../core/escala';
 import { EstadoService } from '../../core/estado.service';
 import { TEMAS } from '../../core/temas';
+import { ControleSetoresComponent } from '../../shared/controle-setores.component';
 import { decimal, numero, numeroCompacto } from '../../shared/formatadores';
 import { LegendaComponent, type ItemLegenda } from '../../shared/legenda.component';
 import { CabecalhoPainelComponent } from './cabecalho-painel.component';
@@ -12,7 +14,7 @@ import { SeletoresComponent } from './seletores.component';
 @Component({
   selector: 'app-painel-mg',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CabecalhoPainelComponent, SeletoresComponent, LegendaComponent],
+  imports: [CabecalhoPainelComponent, SeletoresComponent, LegendaComponent, ControleSetoresComponent, RouterLink],
   template: `
     <app-cabecalho-painel />
 
@@ -46,6 +48,8 @@ import { SeletoresComponent } from './seletores.component';
     </ul>
 
     <app-seletores />
+    <button type="button" class="btn perto" (click)="estado.pertoDeMim()">Perto de mim</button>
+    <app-controle-setores />
 
     <app-legenda [titulo]="tema().titulo" [unidade]="tema().unidade" [itens]="itensLegenda()" />
 
@@ -66,8 +70,12 @@ import { SeletoresComponent } from './seletores.component';
       Malha e população: IBGE · Estabelecimentos: CNES/DATASUS (apenas os que atendem pelo SUS). Mapa base: © OpenStreetMap,
       OpenFreeMap.
     </p>
+    <p class="fonte muted">
+      <a routerLink="/sobre">Sobre e fontes dos dados</a> · <a routerLink="/privacidade">Privacidade</a>
+    </p>
   `,
   styles: `
+    .perto { width: 100%; margin: 0.5rem 0; }
     .abas { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0.75rem 0; }
     .abas button {
       min-height: 44px; border: 1px solid var(--borda-forte); background: var(--superficie); color: var(--texto);

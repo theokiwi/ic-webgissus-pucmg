@@ -14,6 +14,8 @@ import {
 } from '@angular/core';
 import { categoria, dataLocal, rotuloCategoria, situacaoFuncionamento, type EstabelecimentoDTO } from '@webgissus/domain';
 import { EstadoService } from '../../core/estado.service';
+import { CompartilharComponent } from '../../shared/compartilhar.component';
+import { ComoChegarComponent } from '../rota/como-chegar.component';
 import { competenciaIso, enderecoLinhas, NOMES_DIA, ORDEM_DIAS, telefone, telefoneDigitos } from '../../shared/formatadores';
 import { descreverMudanca, rotuloSituacao } from '../../shared/situacao';
 
@@ -27,6 +29,7 @@ const NATUREZA: Record<EstabelecimentoDTO['natureza'], string> = {
 
 @Component({
   selector: 'app-ficha',
+  imports: [CompartilharComponent, ComoChegarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="topo">
@@ -55,6 +58,10 @@ const NATUREZA: Record<EstabelecimentoDTO['natureza'], string> = {
           <span> · {{ mudanca() }}</span>
         }
       </p>
+
+      <app-compartilhar [contexto]="contextoCompartilhar()" />
+
+      <app-como-chegar />
 
       @if (!f.coordOk) {
         <p class="aviso-loc" role="note">Localização pode estar imprecisa.</p>
@@ -172,6 +179,17 @@ export class FichaComponent {
     return situacaoFuncionamento(f?.horarios ?? [], f?.sempreAberto ?? false, this.agora());
   });
   protected readonly mudanca = computed(() => descreverMudanca(this.situacao(), this.agora()));
+  protected readonly contextoCompartilhar = computed(() => {
+    const f = this.d();
+    return {
+      tipo: 'estabelecimento' as const,
+      nome: f?.nome ?? '',
+      categoriaRotulo: this.rotulo(),
+      municipio: f?.municipio.nome ?? '',
+      // "Aberto agora" envelhece depois do envio; só o que não muda entra na mensagem.
+      situacao: f?.sempreAberto ? 'Atendimento 24 horas' : undefined,
+    };
+  });
   protected readonly cor = computed(() => (this.d() ? categoria(this.d()!.categoria).cor : '#555'));
   protected readonly rotulo = computed(() => (this.d() ? rotuloCategoria(this.d()!.categoria) : ''));
   protected readonly endereco = computed(() => (this.d() ? enderecoLinhas(this.d()!.endereco) : []));
