@@ -29,6 +29,41 @@ def natureza(co_natureza_jur: str | None) -> str:
     return NATUREZA_POR_DIGITO.get(s[:1], "nao_informada")
 
 
+_SUFIXO_UF = re.compile(r"\s*-\s*MG\s*$")
+_ESPACOS = re.compile(r"\s+")
+
+# Nomes das 16 macrorregiões de saúde de MG (DS_NOME da base territorial DATASUS, em maiúsculas)
+MACRO_NOMES = {
+    "SUL": "Sul",
+    "CENTRO SUL": "Centro Sul",
+    "CENTRO": "Centro",
+    "JEQUITINHONHA": "Jequitinhonha",
+    "OESTE": "Oeste",
+    "LESTE": "Leste",
+    "SUDESTE": "Sudeste",
+    "NORTE": "Norte",
+    "NOROESTE": "Noroeste",
+    "LESTE DO SUL": "Leste do Sul",
+    "NORDESTE": "Nordeste",
+    "TRIANGULO DO SUL": "Triângulo do Sul",
+    "TRIANGULO DO NORTE": "Triângulo do Norte",
+    "VALE DO ACO": "Vale do Aço",
+    "EXTREMO SUL": "Extremo Sul",
+    "SUDOESTE": "Sudoeste",
+}
+
+
+def nome_regiao(bruto: str) -> str:
+    """Remove o sufixo ' - MG' e colapsa espaços: 'Belo Horizonte/Nova Lima/Santa Luzia   - MG' -> 'Belo Horizonte/Nova Lima/Santa Luzia'."""
+    return _ESPACOS.sub(" ", _SUFIXO_UF.sub("", bruto)).strip()
+
+
+def nome_macro(bruto: str) -> str:
+    """Título em português com acentos para as macrorregiões de MG; fora do dicionário, title()."""
+    chave = _ESPACOS.sub(" ", bruto).strip().upper()
+    return MACRO_NOMES.get(chave, bruto.strip().title())
+
+
 def dia_semana(co_dia_cnes: str | int | None) -> int | None:
     """CNES: 1=domingo … 7=sábado  ->  0=domingo … 6=sábado. Fora de 1..7 devolve None."""
     try:
