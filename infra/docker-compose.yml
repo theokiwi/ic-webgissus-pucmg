@@ -18,9 +18,33 @@ services:
       timeout: 3s
       retries: 20
 
-  # Fase 5: roteamento (Valhalla com recorte OSM do Sudeste)
-  # valhalla:
-  #   image: ghcr.io/valhalla/valhalla-scripted:<versão fixa>
+  # Fase 5: roteamento. Fora do `pnpm db:up`; suba com `pnpm rotas:up` depois de
+  # `pnpm rotas:preparar` (gera data/processed/valhalla). Ver ADR 0005.
+  valhalla:
+    image: ghcr.io/valhalla/valhalla-scripted:3.9.1
+    profiles: ["rotas"]
+    command: ["build_tiles"]
+    environment:
+      # Usa os tiles prontos: sem rebuild e sem olhar para PBFs.
+      use_tiles_ignore_pbf: "True"
+      force_rebuild: "False"
+      build_tar: "False"
+      build_admins: "False"
+      build_time_zones: "False"
+      serve_tiles: "True"
+      server_threads: "${VALHALLA_THREADS:-4}"
+    ports:
+      - "127.0.0.1:${VALHALLA_PORT:-8002}:8002"
+    volumes:
+      - ../data/processed/valhalla:/custom_files
+    mem_limit: 2g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:8002/status >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
 volumes:
   pgdata:
