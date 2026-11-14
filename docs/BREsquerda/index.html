@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Brasil · Presidente 2º turno 2022 × 2026 por município e local de votação</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#222}
+#map{position:absolute;inset:0;background:#f4f4f2}
+.panel{position:absolute;z-index:1000;background:rgba(255,255,255,.96);border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2);padding:12px 14px}
+#info{top:12px;left:56px;width:350px;max-height:calc(100% - 48px);overflow:auto;box-sizing:border-box}
+#info h1{font-size:16px;margin:0 0 4px}#info p{margin:0 0 8px;font-size:12px;color:#555}
+.tabs{display:flex;gap:4px;margin:6px 0 8px}.tabs button{flex:1;border:1px solid #bbb;background:#f5f5f5;border-radius:5px;padding:6px 4px;font-size:12px;cursor:pointer;line-height:1.25}
+.tabs button.on{background:#333;color:#fff;border-color:#333}
+.bar{display:flex;height:14px;border-radius:3px;overflow:hidden;margin:6px 0}
+.row{display:flex;align-items:center;gap:6px;font-size:13px;margin:3px 0}
+.sw{width:12px;height:12px;border-radius:50%;flex:none;display:inline-block}.sq{width:10px;height:12px;flex:none;display:inline-block}
+.row b{margin-left:auto;font-variant-numeric:tabular-nums}
+.cmp{width:100%;border-collapse:collapse;font-size:12.5px}.cmp th{font-weight:600;color:#555;text-align:right;padding:2px 4px}.cmp th:first-child{text-align:left}
+.cmp td{padding:2px 4px}.cmp td.n{text-align:right;font-variant-numeric:tabular-nums}.up{color:#1a7f3c}.dn{color:#b3261e}
+#legend{bottom:24px;right:12px;font-size:12px;max-width:240px}#legend svg{display:block}
+.ctrl{font-size:12px;margin-top:8px;display:flex;align-items:center;gap:6px}
+input[type=search]{width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #ccc;border-radius:5px;margin-top:6px}
+.pie,.bars{cursor:pointer}.pie svg{overflow:visible;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.35))}
+.bars svg{overflow:visible;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.pop h3{margin:0 0 2px;font-size:14px}.pop small{color:#666}.pop table{margin-top:6px;border-collapse:collapse;font-size:13px}
+.pop td,.pop th{padding:1px 6px 1px 0}.pop th{font-weight:600;color:#555;text-align:right}.pop td.n{text-align:right;font-variant-numeric:tabular-nums}
+.pop .nota{font-size:11px;color:#777;margin-top:6px;max-width:300px}
+.pop button,.btn{margin-top:8px;border:0;background:#333;color:#fff;border-radius:5px;padding:6px 10px;font-size:12px;cursor:pointer}
+select{flex:1;min-width:0;width:100%;padding:5px 6px;border:1px solid #bbb;border-radius:5px;font-size:12.5px;background:#fff}.ctrl label{width:66px;flex:none}
+.btn.sec{background:#fff;color:#333;border:1px solid #999}
+.src{font-size:10px;color:#777;margin-top:6px}
+.lista{font-size:12px;margin:6px 0 0;padding:0;list-style:none;max-height:180px;overflow:auto;border-top:1px solid #eee}
+.lista li{display:flex;gap:6px;padding:3px 2px;border-bottom:1px solid #f0f0f0;cursor:pointer}.lista li:hover{background:#f3f3f3}.lista li b{margin-left:auto;font-weight:500;font-variant-numeric:tabular-nums;color:#555}
+.voltar{font-size:12px;color:#2b7a3d;text-decoration:none;cursor:pointer;background:none;border:0;padding:0}
+.big{font-size:22px;font-weight:700}.muted{color:#666;font-size:12px}
+#carregando{position:absolute;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.7);font-size:15px}
+@media(max-width:600px){#info{left:8px;right:8px;width:auto;top:auto;bottom:8px;max-height:45%}#legend{display:none}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="carregando">Carregando mapa dos municípios…</div>
+<div id="info" class="panel">
+  <div id="vBrasil">
+    <h1>Brasil · Presidente (2º turno) 2022 × 2026</h1>
+    <div class="tabs" id="tabsTema"><button data-t="r26">Quem venceu em 2026</button><button data-t="lb">Lula 2022 → Bolsonaro 2026</button><button data-t="bl">Bolsonaro 2022 → Lula 2026</button></div>
+    <div id="placar"></div>
+    <p id="descTema"></p>
+    <div id="resumoTema"></div>
+    <div class="ctrl"><label for="selUF">Estado</label><select id="selUF"></select></div>
+    <div class="ctrl"><label for="selMun">Município</label><select id="selMun"></select></div>
+    <div style="display:flex;gap:6px"><button class="btn" id="btnAbrir" hidden>Ver locais de votação</button><button class="btn sec" id="btnLimpar">Limpar e voltar ao mapa inicial</button></div>
+    <div class="muted" style="margin-top:8px" id="tituloLista"></div>
+    <ul class="lista" id="lista"></ul>
+    <div class="src">Malha municipal: IBGE 2024 · Votos: TSE, 2º turno — 2026: divulgação oficial de resultados (por município) e boletins de urna (por seção); 2022: votação por seção. <a href="artigo/">Leia o artigo: O Brasil é de esquerda no fim das contas &rarr;</a></div>
+  </div>
+  <div id="vMun" hidden>
+    <div style="display:flex;justify-content:space-between"><button class="voltar" id="btnVoltar">&larr; Voltar ao mapa do Brasil</button><button class="voltar" id="btnLimpar2">Limpar</button></div>
+    <h1 id="titMun"></h1>
+    <div class="tabs" id="tabsModo"><button data-m="pizza">2º turno 2026 · pizza</button><button data-m="barras">Comparativo 2022 × 2026</button></div>
+    <p id="desc"></p>
+    <div id="resumo"></div>
+    <div class="ctrl"><label for="filtro">Filtro</label><select id="filtro"></select></div>
+    <div class="ctrl"><label for="esc">Tamanho</label><input id="esc" type="range" min="0.5" max="2" step="0.1" value="0.5"></div>
+    <input id="busca" type="search" placeholder="Buscar local ou bairro…">
+    <div class="src" id="src"></div>
+  </div>
+</div>
+<div id="legend" class="panel"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+const K=['bolsonaro','lula'];
+const C={bolsonaro:'#1a9850',lula:'#d7191c',outros:'#f28e2b'};
+const C22={bolsonaro:'#97d6a4',lula:'#f3a0a1',outros:'#f9cb95'};
+const N={bolsonaro:'Bolsonaro',lula:'Lula',outros:'Outros'};
+const N26={bolsonaro:'Flávio Bolsonaro',lula:'Lula',outros:'Outros'};
+const fmt=n=>n.toLocaleString('pt-BR'),f1=x=>x.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const pc=(a,b)=>b?100*a/b:0,pct=(a,b)=>f1(pc(a,b))+'%';
+const dpp=(a,b)=>{const d=a-b;return `<span class="${d>0.05?'up':d<-0.05?'dn':''}">${d>0?'+':''}${f1(d)}</span>`};
+const $=id=>document.getElementById(id);
+const map=L.map('map',{preferCanvas:true,minZoom:3}).setView([-14.5,-52],4);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:17,attribution:'Esri, HERE, Garmin, OSM | Malha: IBGE 2024 | Dados: TSE 2º turno 2022 e 2026'}).addTo(map);
+const UFN={AC:'Acre',AL:'Alagoas',AM:'Amazonas',AP:'Amapá',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MG:'Minas Gerais',MS:'Mato Grosso do Sul',MT:'Mato Grosso',PA:'Pará',PB:'Paraíba',PE:'Pernambuco',PI:'Piauí',PR:'Paraná',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RO:'Rondônia',RR:'Roraima',RS:'Rio Grande do Sul',SC:'Santa Catarina',SE:'Sergipe',SP:'São Paulo',TO:'Tocantins'};
+const ven=(b,l)=>b>l?'b':l>b?'l':'e';
+const val=(p,s='')=>(p['bolsonaro'+s]||0)+(p['lula'+s]||0);
+
+/* ---------- visão Brasil ---------- */
+const TEMA={r26:{txt:'Mais votado em cada município no 2º turno de 2026 (Lula × Flávio Bolsonaro).',rot:'Quem venceu no 2º turno de 2026'},
+            lb:{de:'l',para:'b',cor:C.bolsonaro,txt:'Municípios onde Lula teve mais votos em 2022 e Bolsonaro teve mais votos em 2026.',rot:'Lula 2022 → Bolsonaro 2026'},
+            bl:{de:'b',para:'l',cor:C.lula,txt:'Municípios onde Bolsonaro teve mais votos em 2022 e Lula teve mais votos em 2026.',rot:'Bolsonaro 2022 → Lula 2026'}};
+let BR=null,tema='r26',uf='',munSel='',V={},geo,munLayer,ufLayer,hi;
+const classe=p=>p&&p.w22?p.w22+p.w26:null;
+const noTema=p=>tema==='r26'?false:classe(p)===TEMA[tema].de+TEMA[tema].para;
+function estilo(f){const p=V[f.properties.CD_MUN],on=noTema(p),fora=uf&&f.properties.SIGLA_UF!==uf;
+  if(tema==='r26'){const w=p&&p.w26,m=p?Math.abs(pc(p.lula,val(p))-50):0,c=w==='l'?(m>10?'#c51b1f':'#f08a8b'):w==='b'?(m>10?'#1a8a47':'#8fd19e'):'#ddd';return {renderer:canvas,weight:.25,color:'#999',fillColor:c,fillOpacity:fora?.25:.85}}
+  return {renderer:canvas,weight:on?.5:.25,color:on?'#333':'#bbb',fillColor:on?TEMA[tema].cor:(p&&p.w26==='b'?'#e3eee6':'#f2e3e3'),fillOpacity:fora?(on?.35:.25):(on?.85:.6)}}
+const canvas=L.canvas({padding:.5,tolerance:2});
+function popMun(cd){const p=V[cd];if(!p)return 'Sem dados';const v22=val(p,'22'),v26=val(p);
+  return `<div class="pop"><h3>${p.nome} (${p.uf})</h3><table><tr><th></th><th>2022</th><th>2026</th><th>Δ p.p.</th></tr>${K.map(k=>`<tr><td><span class="sq" style="background:${C22[k]}"></span><span class="sq" style="background:${C[k]}"></span> ${N[k]}</td><td class="n">${pct(p[k+'22']||0,v22)}</td><td class="n">${pct(p[k],v26)}</td><td class="n">${p.w22?dpp(pc(p[k],v26),pc(p[k+'22'],v22)):''}</td></tr>`).join('')}
+<tr><td>Válidos</td><td class="n">${p.w22?fmt(v22):'—'}</td><td class="n">${fmt(v26)}</td><td></td></tr></table>
+<div class="nota">Mais votado: 2022 ${{b:'Jair Bolsonaro',l:'Lula',e:'empate'}[p.w22]||'— (município sem eleição em 2022)'} · 2026 ${{b:'Flávio Bolsonaro',l:'Lula',e:'empate'}[p.w26]}${p.pst!=null&&p.pst<100?` · apuração 2026 em ${f1(p.pst)}% das seções`:''}</div>
+<button onclick="abrirMun('${cd}')">Ver locais de votação</button></div>`}
+function desenharBrasil(){munLayer.setStyle(estilo);painelBrasil()}
+function placar(){if(!BR){$('placar').innerHTML='';return}const c=Object.fromEntries(BR.cand.map(x=>[x[0],+x[2]])),l=c['13']||0,b=c['22']||0,t=l+b;
+  $('placar').innerHTML=`<div class="bar"><div style="width:${pc(l,t)}%;background:${C.lula}"></div><div style="width:${pc(b,t)}%;background:${C.bolsonaro}"></div></div>
+<div class="row"><span class="sw" style="background:${C.lula}"></span>Lula<b>${fmt(l)} · ${pct(l,t)}</b></div><div class="row"><span class="sw" style="background:${C.bolsonaro}"></span>Flávio Bolsonaro<b>${fmt(b)} · ${pct(b,t)}</b></div>
+<div class="muted" style="font-size:10.5px">Brasil, votos válidos · TSE, ${(+BR.pst.replace(',','.')).toFixed(2).replace('.',',')}% das seções totalizadas (${BR.hg})</div>`}
+function painelBrasil(){
+  if(tema==='r26'){document.querySelectorAll('#tabsTema button').forEach(b=>b.classList.toggle('on',b.dataset.t===tema));
+    const todos=Object.entries(V).filter(([c,p])=>!uf||p.uf===uf),nl=todos.filter(([c,p])=>p.w26==='l'),nb=todos.filter(([c,p])=>p.w26==='b');
+    const vl=todos.reduce((s,[c,p])=>s+p.lula,0),vb=todos.reduce((s,[c,p])=>s+p.bolsonaro,0);
+    $('descTema').textContent=TEMA.r26.txt+(uf?'':' Cor forte: vitória por mais de 20 pontos.');
+    $('resumoTema').innerHTML=`<div class="row"><span class="sw" style="background:${C.lula}"></span>Lula venceu em <b>${fmt(nl.length)} municípios</b></div><div class="row"><span class="sw" style="background:${C.bolsonaro}"></span>Flávio venceu em <b>${fmt(nb.length)} municípios</b></div>`+
+      (uf?`<div class="muted">${UFN[uf]}: Lula ${pct(vl,vl+vb)} × Flávio ${pct(vb,vl+vb)} dos votos válidos</div>`:'');
+    const top=todos.slice().sort((a,b)=>val(b[1])-val(a[1]));$('tituloLista').textContent=`Maiores municípios ${uf?'de '+UFN[uf]:'do Brasil'} (clique para abrir os locais de votação)`;
+    $('lista').innerHTML=top.slice(0,100).map(([c,p])=>`<li data-c="${c}"><span class="sw" style="background:${C[p.w26==='l'?'lula':'bolsonaro']}"></span>${p.nome} <span class="muted">${p.uf}</span><b>${pct(p.lula,val(p))} Lula</b></li>`).join('');
+    $('lista').querySelectorAll('li').forEach(li=>li.onclick=()=>{selecionar(li.dataset.c,true)});legendaBrasil();return}
+  document.querySelectorAll('#tabsTema button').forEach(b=>b.classList.toggle('on',b.dataset.t===tema));
+  const t=TEMA[tema],todos=Object.entries(V).filter(([c,p])=>!uf||p.uf===uf),sel=todos.filter(([c,p])=>noTema(p));
+  const ele=sel.reduce((s,[c,p])=>s+val(p),0),eleT=todos.reduce((s,[c,p])=>s+val(p),0);
+  $('descTema').textContent=t.txt;
+  $('resumoTema').innerHTML=`<div class="row"><span class="sw" style="background:${t.cor}"></span><span class="big">${fmt(sel.length)}</span><span class="muted">de ${fmt(todos.length)} municípios ${uf?'de '+UFN[uf]:'do Brasil'}</span></div>
+<div class="muted">${fmt(ele)} votos válidos em 2026 nesses municípios (${pct(ele,eleT)} do total ${uf?'do estado':'do país'})</div>`;
+  sel.sort((a,b)=>val(b[1])-val(a[1]));
+  $('tituloLista').textContent=sel.length?`${t.rot}: maiores municípios (clique para abrir)`:`Nenhum município ${uf?'de '+UFN[uf]+' ':''}teve essa mudança entre o 2º turno de 2022 e o de 2026.`;
+  $('lista').innerHTML=sel.slice(0,100).map(([c,p])=>`<li data-c="${c}">${p.nome} <span class="muted">${p.uf}</span><b>${fmt(val(p))}</b></li>`).join('');
+  $('lista').querySelectorAll('li').forEach(li=>li.onclick=()=>{selecionar(li.dataset.c,true)});
+  legendaBrasil()}
+function legendaBrasil(){const t=TEMA[tema];if(tema==='r26'){$('legend').innerHTML=`<b>Quem venceu · 2º turno 2026</b>${[['#c51b1f','Lula, por mais de 20 pontos'],['#f08a8b','Lula, por até 20 pontos'],['#8fd19e','Flávio, por até 20 pontos'],['#1a8a47','Flávio, por mais de 20 pontos']].map(([c,t])=>`<div class="row"><span class="sq" style="background:${c};width:14px"></span>${t}</div>`).join('')}`;return}$('legend').innerHTML=`<b>${t.rot}</b>
+<div class="row"><span class="sq" style="background:${t.cor};width:14px"></span>Mudou de ${t.de==='l'?'Lula para Bolsonaro':'Bolsonaro para Lula'}</div>
+<div class="row"><span class="sq" style="background:#e3eee6;border:1px solid #ccc;width:12px"></span>Demais · Bolsonaro venceu em 2026</div>
+<div class="row"><span class="sq" style="background:#f2e3e3;border:1px solid #ccc;width:12px"></span>Demais · Lula venceu em 2026</div>
+<div class="muted" style="margin-top:4px">2022: Jair Bolsonaro · 2026: Flávio Bolsonaro</div>`}
+function opcoesUF(){const ufs=[...new Set(Object.values(V).map(p=>p.uf))].sort();
+  $('selUF').innerHTML='<option value="">Brasil (todos os estados)</option>'+ufs.map(u=>`<option value="${u}">${UFN[u]||u}</option>`).join('');$('selUF').value=uf}
+function opcoesMun(){const ms=Object.entries(V).filter(([c,p])=>p.uf===uf).sort((a,b)=>a[1].nome.localeCompare(b[1].nome,'pt'));
+  $('selMun').innerHTML=uf?'<option value="">Escolha o município…</option>'+ms.map(([c,p])=>`<option value="${c}">${p.nome}${noTema(p)?' ●':''}</option>`).join(''):'<option value="">Escolha antes o estado</option>';
+  $('selMun').disabled=!uf;$('selMun').value=munSel;$('btnAbrir').hidden=!munSel}
+function setUF(u,zoom=true){uf=u;munSel='';opcoesUF();opcoesMun();desenharBrasil();
+  if(zoom){if(uf){const b=L.latLngBounds([]);munLayer.eachLayer(l=>{if(l.feature.properties.SIGLA_UF===uf)b.extend(l.getBounds())});map.fitBounds(b)}else map.setView([-14.5,-52],4)}}
+function selecionar(cd,abrir){const p=V[cd];if(!p)return;if(uf!==p.uf){uf=p.uf;opcoesUF()}munSel=cd;opcoesMun();desenharBrasil();
+  if(hi)map.removeLayer(hi);const lyr=munLayer.getLayers().find(l=>l.feature.properties.CD_MUN===cd);
+  hi=L.geoJSON(lyr.feature,{style:{color:'#000',weight:2.5,fill:false},interactive:false}).addTo(map);
+  if(abrir)abrirMun(cd);else{map.fitBounds(lyr.getBounds(),{maxZoom:10});lyr.openPopup?null:null}}
+
+/* ---------- visão município (locais de votação, como BH) ---------- */
+const SLUG={pizza:{todos:'2026',l26:'2026-lula',b26:'2026-bolsonaro'},barras:{todos:'comparativo',bb:'comparativo-bolsonaro-manteve',bl:'comparativo-bolsonaro-perdeu',ll:'comparativo-lula-manteve',lb:'comparativo-lula-perdeu'}};
+let modo='pizza',escala=0.5,maxV=1,layer,feats=[],meta,munAtual=null,limMun,z0=12,cache={};
+const zf=()=>{const d=map.getZoom()-z0;return d>=3?2:d>=2?1.6:d>=1?1.25:d<=-1?0.7:1};
+const raio=v=>Math.max(4,26*Math.sqrt(v/maxV))*escala*zf();
+function arc(c,r,a0,a1){const p=a=>`${c+r*Math.sin(a)},${c-r*Math.cos(a)}`;return `M${c},${c}L${p(a0)}A${r},${r} 0 ${a1-a0>Math.PI?1:0} 1 ${p(a1)}Z`}
+function pieSVG(p,r){let a=0,s='';for(const k of K){const v=p[k];if(!v)continue;const b=a+2*Math.PI*v/p.validos;
+  s+=v===p.validos?`<circle cx="${r}" cy="${r}" r="${r}" fill="${C[k]}"/>`:`<path d="${arc(r,r,a,b)}" fill="${C[k]}"/>`;a=b}
+  return `<svg width="${2*r}" height="${2*r}"><g stroke="#fff" stroke-width="${r>8?1:.5}">${s}</g></svg>`}
+function barGeom(){const s=escala*zf();return {w:3.5*s,g:3*s,H:60*s}}
+function barSVG(p){const {w,g,H}=barGeom(),W=K.length*2*w+(K.length-1)*g,top=H;let s='',x=0;
+  for(const k of K){for(const [v,t,c] of [[p[k+'22'],p.validos22,C22[k]],[p[k],p.validos,C[k]]]){const h=H*pc(v,t)/100;s+=`<rect x="${x}" y="${top-h}" width="${w}" height="${h}" fill="${c}" stroke="#333" stroke-width=".4"/>`;x+=w}x+=g}
+  return {svg:`<svg width="${W}" height="${top}"><line x1="-1" x2="${W+1}" y1="${top}" y2="${top}" stroke="#333" stroke-width="1"/>${s}</svg>`,W,Ht:top}}
+function cab(p){return `<h3>${p.nome}</h3><small>${p.endereco||''}${p.bairro?' · '+p.bairro:''}<br>Zona ${p.zona} · Local ${p.local}</small>`}
+function popPizza(p){return `<div class="pop">${cab(p)}<table>${K.map(k=>`<tr><td><span class="sw" style="background:${C[k]}"></span> ${N26[k]}</td><td class="n">${fmt(p[k])}</td><td class="n">${pct(p[k],p.validos)}</td></tr>`).join('')}
+<tr><td><b>Válidos</b></td><td class="n"><b>${fmt(p.validos)}</b></td><td></td></tr><tr><td>Brancos/nulos</td><td class="n">${fmt(p.brancos_nulos)}</td><td></td></tr></table><div class="nota">Boletins de urna de ${p.secoes} de ${p.secoes_total} seções do local${p.secoes<p.secoes_total?' (as demais ainda não publicadas pelo TSE)':''}.</div></div>`}
+function popBarras(p){if(!p.tem_2022)return `<div class="pop">${cab(p)}<div class="nota">Local sem seções correspondentes em 2022 (seções criadas para 2026); sem comparação.</div></div>`;
+  return `<div class="pop">${cab(p)}<table><tr><th></th><th>2022</th><th></th><th>2026</th><th></th><th>Δ p.p.</th></tr>${K.map(k=>`<tr><td><span class="sq" style="background:${C22[k]}"></span><span class="sq" style="background:${C[k]}"></span> ${N[k]}</td><td class="n">${fmt(p[k+'22'])}</td><td class="n">${pct(p[k+'22'],p.validos22)}</td><td class="n">${fmt(p[k])}</td><td class="n">${pct(p[k],p.validos)}</td><td class="n">${dpp(pc(p[k],p.validos),pc(p[k+'22'],p.validos22))}</td></tr>`).join('')}
+<tr><td><b>Válidos</b></td><td class="n"><b>${fmt(p.validos22)}</b></td><td></td><td class="n"><b>${fmt(p.validos)}</b></td><td></td><td></td></tr></table>
+<div class="nota">2022: Jair Bolsonaro · 2026: Flávio Bolsonaro. Votos do 2º turno de 2022 somados pelas mesmas seções eleitorais que votaram neste local em 2026${p.secoes_c22<p.secoes_total?` (${p.secoes_c22} de ${p.secoes_total} seções existiam em 2022)`:''}.</div></div>`}
+function marcador(x){const p=x.properties,[lon,lat]=x.geometry.coordinates;
+  if(modo==='pizza'){const r=raio(p.validos);return L.marker([lat,lon],{icon:L.divIcon({className:'pie',html:pieSVG(p,r),iconSize:[2*r,2*r],iconAnchor:[r,r]}),title:p.nome,zIndexOffset:-Math.round(p.validos/10)}).bindPopup(popPizza(p))}
+  if(!p.tem_2022)return L.circleMarker([lat,lon],{radius:3,color:'#777',weight:1,fillColor:'#bbb',fillOpacity:1}).bindPopup(popBarras(p));
+  const b=barSVG(p);return L.marker([lat,lon],{icon:L.divIcon({className:'bars',html:b.svg,iconSize:[b.W,b.Ht],iconAnchor:[b.W/2,b.Ht]}),title:p.nome}).bindPopup(popBarras(p),{offset:[0,-b.Ht*0.6]})}
+const w26=p=>ven(p.bolsonaro,p.lula),w22=p=>p.tem_2022?ven(p.bolsonaro22,p.lula22):null;
+const FILTROS={pizza:[['todos','Todos os locais',p=>true],['l26','Lula venceu em 2026',p=>w26(p)==='l'],['b26','Bolsonaro venceu em 2026',p=>w26(p)==='b']],
+  barras:[['todos','Todos os locais',p=>true],['bb','Bolsonaro venceu em 2022 e em 2026',p=>w22(p)==='b'&&w26(p)==='b'],['bl','Bolsonaro venceu em 2022 e perdeu em 2026',p=>w22(p)==='b'&&w26(p)==='l'],
+    ['ll','Lula venceu em 2022 e em 2026',p=>w22(p)==='l'&&w26(p)==='l'],['lb','Lula venceu em 2022 e perdeu em 2026',p=>w22(p)==='l'&&w26(p)==='b']]};
+function opcoesFiltro(){$('filtro').innerHTML=FILTROS[modo].map(([v,t,fn])=>`<option value="${v}">${t} (${feats.filter(x=>fn(x.properties)).length})</option>`).join('')}
+let nVis=0;
+function desenhar(){if(!munAtual)return;if(layer)map.removeLayer(layer);const f=$('busca').value.trim().toUpperCase(),fn=(FILTROS[modo].find(o=>o[0]===$('filtro').value)||FILTROS[modo][0])[2];
+  const vis=feats.filter(x=>fn(x.properties)&&(!f||(x.properties.nome+' '+(x.properties.bairro||'')).toUpperCase().includes(f)));nVis=vis.length;
+  layer=L.layerGroup(vis.map(marcador)).addTo(map);legenda();fonte()}
+function legenda(){let h;
+  if(modo==='pizza'){const st=maxV>4000?500:maxV>800?100:10,vs=[maxV,maxV/4,maxV/16].map(v=>Math.round(v/st)*st||st),rs=vs.map(raio),R=rs[0];
+    h=`<b>Votos válidos 2026</b><svg width="${2*R+90}" height="${Math.max(2*R,28)+14}" viewBox="0 -8 ${2*R+90} ${Math.max(2*R,28)+14}">`;
+    let ly=-1e9;vs.forEach((v,i)=>{const r=rs[i],cy=2*R+3-r,ty=Math.max(cy-r+4,ly+12);ly=ty;h+=`<circle cx="${R+2}" cy="${cy}" r="${r}" fill="none" stroke="#555"/><line x1="${R+2}" y1="${cy-r}" x2="${2*R+10}" y2="${ty-4}" stroke="#999" stroke-dasharray="2"/><text x="${2*R+13}" y="${ty}" font-size="11">${fmt(v)}</text>`});
+    h+='</svg>'+K.map(k=>`<div class="row"><span class="sw" style="background:${C[k]}"></span>${N26[k]}</div>`).join('')}
+  else{const {H}=barGeom(),y=t=>H*(1-t/100)+6;
+    h=`<b>% dos votos válidos</b><div class="row" style="font-size:11px;color:#555">barra clara = 2022 · escura = 2026</div>`+K.map(k=>`<div class="row"><span class="sq" style="background:${C22[k]}"></span><span class="sq" style="background:${C[k]}"></span>${N[k]} 2022 × 2026</div>`).join('')+
+      `<svg width="170" height="${H+14}">${[0,25,50,75,100].map(t=>`<line x1="30" x2="40" y1="${y(t)}" y2="${y(t)}" stroke="#555"/><text x="26" y="${y(t)+4}" font-size="10" text-anchor="end">${t}%</text>`).join('')}<line x1="40" x2="40" y1="${y(100)}" y2="${y(0)}" stroke="#555"/><text x="46" y="${y(50)}" font-size="10" fill="#555">escala das barras</text></svg>`+
+      `<div class="row"><span class="sw" style="background:#bbb;border:1px solid #777;width:7px;height:7px"></span>Local sem seções em 2022</div>`}
+  $('legend').innerHTML=h}
+function painel(){const m=meta;document.querySelectorAll('#tabsModo button').forEach(b=>b.classList.toggle('on',b.dataset.m===modo));
+  if(modo==='pizza'){$('desc').textContent='Votos válidos de 2026 por local de votação. A área da pizza é proporcional ao total de votos válidos do local.';
+    $('resumo').innerHTML=`<div class="bar">${K.map(k=>`<div style="width:${pc(m[k],m.validos)}%;background:${C[k]}"></div>`).join('')}</div>`+K.map(k=>`<div class="row"><span class="sw" style="background:${C[k]}"></span>${N26[k]}<b>${fmt(m[k])} · ${pct(m[k],m.validos)}</b></div>`).join('')}
+  else{$('desc').textContent='Por local: % dos votos válidos em 2022 (barra clara) e 2026 (barra escura). 2022 = Jair Bolsonaro; 2026 = Flávio Bolsonaro.';
+    $('resumo').innerHTML=`<table class="cmp"><tr><th>Município*</th><th>2022</th><th>2026</th><th>Δ p.p.</th></tr>${K.map(k=>{const a=pc(m[k+'22'],m.validos22),b=pc(m[k],m.validos);return `<tr><td><span class="sq" style="background:${C22[k]}"></span><span class="sq" style="background:${C[k]}"></span> ${N[k]}</td><td class="n">${f1(a)}%</td><td class="n">${f1(b)}%</td><td class="n">${dpp(b,a)}</td></tr>`}).join('')}
+<tr><td>Válidos</td><td class="n">${fmt(m.validos22)}</td><td class="n">${fmt(m.validos)}</td><td></td></tr></table><div class="muted" style="font-size:10.5px">* 2022: só as seções que votaram em locais de 2026 mapeados.</div>`}
+  fonte()}
+function fonte(){const m=meta;if(!m)return;
+  $('src').textContent=`${nVis} locais exibidos · boletins de urna de ${fmt(m.secoes_bu)} de ${fmt(m.secoes_total)} seções · `+(modo==='pizza'?`${m.locais} locais · ${fmt(m.validos)} votos válidos`:`${m.comparaveis} de ${m.locais} locais com 2022 (vínculo por seção eleitoral)`)+(m.sem_coord?` · ${m.sem_coord} local(is) sem coordenada no TSE fora do mapa`:'')+' · Fonte: TSE'}
+function setModo(m,k='todos'){modo=m;opcoesFiltro();$('filtro').value=k;painel();desenhar();setHash()}
+function setHash(){history.replaceState(null,'','#'+(munAtual?`m${munAtual}/${SLUG[modo][$('filtro').value||'todos']}`:(tema+(uf?'/'+uf:''))))}
+async function abrirMun(cd,m='pizza',k='todos'){
+  $('carregando').textContent='Carregando locais de votação…';$('carregando').hidden=false;
+  try{const d=cache[cd]||(cache[cd]=await fetch(`data/locais/${cd}.json`).then(r=>{if(!r.ok)throw r.status;return r.json()}));
+    map.closePopup();munAtual=cd;munSel=cd;uf=V[cd].uf;feats=d.features;meta=d.meta;maxV=Math.max(1,...feats.map(f=>f.properties.validos));
+    map.removeLayer(munLayer);if(hi)map.removeLayer(hi);
+    const lyr=munLayer.getLayers().find(l=>l.feature.properties.CD_MUN===cd);
+    limMun=L.geoJSON(lyr.feature,{style:{color:'#444',weight:1.5,fillOpacity:0.03},interactive:false}).addTo(map);
+    const b=feats.length?L.latLngBounds(feats.map(f=>[f.geometry.coordinates[1],f.geometry.coordinates[0]])):lyr.getBounds();
+    map.fitBounds(b.pad(0.05),{maxZoom:14});z0=map.getZoom();
+    $('titMun').textContent=`${meta.nome} (${meta.uf}) · Presidente (2º turno)`;$('vBrasil').hidden=true;$('vMun').hidden=false;$('busca').value='';
+    setModo(m,k)}
+  catch(e){alert('Não foi possível carregar os locais deste município.')}
+  finally{$('carregando').hidden=true}}
+function voltarBrasil(foco=true){munAtual=null;if(layer)map.removeLayer(layer);if(limMun)map.removeLayer(limMun);munLayer.addTo(map);
+  $('vMun').hidden=true;$('vBrasil').hidden=false;const cd=munSel;opcoesUF();opcoesMun();desenharBrasil();if(cd&&foco)selecionar(cd,false);setHash()}
+
+function lerHash(){const h=decodeURIComponent(location.hash.slice(1)),mm=h.match(/^m(\d{7})(?:\/(.*))?$/);
+  if(mm){for(const m in SLUG)for(const k in SLUG[m])if(SLUG[m][k]===mm[2])return {cd:mm[1],m,k};return {cd:mm[1],m:(mm[2]||'').startsWith('comparativo')?'barras':'pizza',k:'todos'}}
+  const [t,u]=h.split('/');return {tema:TEMA[t]?t:'r26',uf:u&&UFN[u]?u:''}}
+function aplicarHash(){const h=lerHash();if(h.cd&&V[h.cd]){abrirMun(h.cd,h.m,h.k);return}
+  if(munAtual)voltarBrasil(false);if(hi){map.removeLayer(hi);hi=null}tema=h.tema;setUF(h.uf);setHash()}
+
+Promise.all([fetch('data/municipios.topo.json').then(r=>r.json()),fetch('data/municipios_votos.json').then(r=>r.json())]).then(([topo,votos])=>{
+  V=votos.mun;BR=votos.br;placar();geo=topojson.feature(topo,topo.objects[Object.keys(topo.objects)[0]]);
+  munLayer=L.geoJSON(geo,{style:estilo,onEachFeature:(f,l)=>{l.bindTooltip(()=>{const p=V[f.properties.CD_MUN];return p?`${p.nome} (${p.uf})`:f.properties.NM_MUN},{sticky:true});
+    l.on('click',e=>{const cd=f.properties.CD_MUN;if(!V[cd])return;if(uf!==V[cd].uf){uf=V[cd].uf;opcoesUF()}munSel=cd;opcoesMun();L.popup().setLatLng(e.latlng).setContent(popMun(cd)).openOn(map)})}}).addTo(map);
+  $('carregando').hidden=true;aplicarHash()});
+window.addEventListener('hashchange',aplicarHash);
+document.querySelectorAll('#tabsTema button').forEach(b=>b.onclick=()=>{tema=b.dataset.t;opcoesMun();desenharBrasil();setHash()});
+$('selUF').onchange=e=>{setUF(e.target.value);setHash()};
+$('selMun').onchange=e=>{if(e.target.value)selecionar(e.target.value,false);else{munSel='';$('btnAbrir').hidden=true;if(hi){map.removeLayer(hi);hi=null}}};
+$('btnAbrir').onclick=()=>munSel&&abrirMun(munSel);
+$('btnVoltar').onclick=()=>voltarBrasil();
+function limpar(){map.closePopup();if(munAtual)voltarBrasil(false);if(hi){map.removeLayer(hi);hi=null}tema='r26';$('busca').value='';setUF('');setHash()}
+$('btnLimpar').onclick=limpar;$('btnLimpar2').onclick=limpar;
+document.querySelectorAll('#tabsModo button').forEach(b=>b.onclick=()=>setModo(b.dataset.m));
+map.on('zoomend',()=>{if(munAtual)desenhar()});
+$('esc').oninput=e=>{escala=+e.target.value;desenhar()};
+$('busca').oninput=desenhar;
+$('filtro').onchange=()=>{desenhar();setHash()};
+</script>
+</body>
+</html>
