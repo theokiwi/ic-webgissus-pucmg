@@ -13,7 +13,10 @@
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "db:up": "docker compose -f infra/docker-compose.yml up -d db",
-    "db:down": "docker compose -f infra/docker-compose.yml down"
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "rotas:preparar": "infra/valhalla/preparar.sh",
+    "rotas:up": "docker compose -f infra/docker-compose.yml --profile rotas up -d valhalla",
+    "rotas:down": "docker compose -f infra/docker-compose.yml --profile rotas stop valhalla"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1"
