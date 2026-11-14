@@ -1,0 +1,6 @@
+# HTTPS automático (Let's Encrypt). DOMINIO vem do ambiente do compose.
+{$DOMINIO} {
+	encode zstd gzip
+	# Sem access log: a query de /api/estabelecimentos/proximos e /api/rota leva a posição do usuário (ver /privacidade).
+	reverse_proxy web:4000
+}

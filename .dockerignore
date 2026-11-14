@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/.angular
+.git
+data
+docs
+pipelines
+infra
+**/*.pmtiles
+.env
+.env.*
