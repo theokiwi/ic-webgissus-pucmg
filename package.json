@@ -1,0 +1,21 @@
+{
+  "name": "ic-webgissus-pucmg",
+  "private": true,
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter web start",
+    "dev:api": "pnpm --filter api start:dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r --if-present test",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d db",
+    "db:down": "docker compose -f infra/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1"
+  }
+}
