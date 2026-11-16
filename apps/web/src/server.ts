@@ -16,11 +16,11 @@ const angularApp = new AngularNodeAppEngine();
 
 /**
  * Proxy de /api e /tiles para a API (`API_URL`), para que o site rode numa única origem.
- * Repassa método, Range e validadores condicionais; devolve status e cabeçalhos de cache/intervalo
- * e transmite o corpo em stream (os PMTiles têm centenas de MB).
+ * Repassa método, Range, validadores condicionais e o corpo do POST /api/acessos (ADR 0009); devolve
+ * status e cabeçalhos de cache/intervalo e transmite o corpo em stream (os PMTiles têm centenas de MB).
  */
 const API_URL = (process.env['API_URL'] || 'http://localhost:3000').replace(/\/+$/, '');
-const CABECALHOS_PEDIDO = ['accept', 'range', 'if-range', 'if-none-match', 'if-modified-since', 'user-agent'];
+const CABECALHOS_PEDIDO = ['accept', 'content-type', 'range', 'if-range', 'if-none-match', 'if-modified-since', 'user-agent'];
 const CABECALHOS_RESPOSTA = [
   'content-type',
   'content-length',
@@ -45,6 +45,7 @@ async function repassar(req: express.Request, res: express.Response): Promise<vo
       method: req.method,
       headers: cabecalhos,
       signal: abortar.signal,
+      ...(req.method === 'POST' ? { body: Readable.toWeb(req) as ReadableStream, duplex: 'half' as const } : {}),
     });
     res.status(resposta.status);
     for (const nome of CABECALHOS_RESPOSTA) {
@@ -63,8 +64,12 @@ async function repassar(req: express.Request, res: express.Response): Promise<vo
   }
 }
 
+/** Único POST da API: a contagem anônima de acessos. */
+const POST_PERMITIDO = '/api/acessos';
+
 app.use(['/api', '/tiles'], (req, res, next) => {
-  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  const post = req.method === 'POST' && req.originalUrl.split('?')[0] === POST_PERMITIDO;
+  if (req.method !== 'GET' && req.method !== 'HEAD' && !post) return next();
   void repassar(req, res);
 });
 

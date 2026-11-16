@@ -2,11 +2,13 @@ import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyR
 import { CATEGORIAS, categoria, situacaoFuncionamento, type ProximoDTO } from '@webgissus/domain';
 import { EstadoService } from '../../core/estado.service';
 import { distancia, numero } from '../../shared/formatadores';
+import { BuscaLugarComponent } from '../mapa/busca-lugar.component';
 import { descreverMudanca, rotuloSituacao } from '../../shared/situacao';
 
 /** Painel "Perto de mim": estabelecimentos mais próximos de um ponto (GET /api/estabelecimentos/proximos). */
 @Component({
   selector: 'app-painel-perto',
+  imports: [BuscaLugarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="cab">
@@ -43,6 +45,8 @@ import { descreverMudanca, rotuloSituacao } from '../../shared/situacao';
           </button>
           <button type="button" class="btn sec" (click)="estado.escolherNoMapa('perto')">Escolher no mapa</button>
         </div>
+        <p class="ou muted">ou digite onde você está</p>
+        <app-busca-lugar />
       </section>
     } @else {
       <div class="acoes pequenas">
@@ -51,6 +55,10 @@ import { descreverMudanca, rotuloSituacao } from '../../shared/situacao';
         </button>
         <button type="button" class="btn sec" (click)="estado.escolherNoMapa('perto')">Escolher outro ponto</button>
       </div>
+      <details class="outro-lugar">
+        <summary>Digitar outro município, bairro ou endereço</summary>
+        <app-busca-lugar />
+      </details>
       @if (loc.erro(); as e) {
         <p class="erro" role="alert">{{ e }}</p>
       }
@@ -146,6 +154,9 @@ import { descreverMudanca, rotuloSituacao } from '../../shared/situacao';
     .acoes .btn { flex: 1 1 140px; }
     .acoes.pequenas .btn { font-size: 0.8125rem; padding: 0 0.5rem; }
     .origem { margin: 0.5rem 0; }
+    .ou { margin: 0.75rem 0 0.25rem; font-size: 0.8125rem; text-align: center; }
+    .outro-lugar { margin: 0 0 0.5rem; font-size: 0.875rem; }
+    .outro-lugar summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; color: var(--primaria); font-weight: 600; }
     .sub { font-size: 0.875rem; margin: 0.5rem 0 0.25rem; }
     .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
     .chip {

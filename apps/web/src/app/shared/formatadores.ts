@@ -97,3 +97,12 @@ export function duracao(s: number | null | undefined): string {
   const r = min % 60;
   return r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, '0')} min`;
 }
+
+/** 'AAAA-MM-DD' (ou ISO com hora, lida no fuso de Brasília) → 'DD/MM/AAAA'; vazio se inválido. */
+export function dataBr(d: string | null | undefined): string {
+  if (!d) return '';
+  const so = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+  if (so) return `${so[3]}/${so[2]}/${so[1]}`;
+  const t = new Date(d);
+  return Number.isNaN(t.getTime()) ? '' : t.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+}

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DOCUMENT, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { AcessosService } from './core/acessos.service';
 import { SeoService } from './core/seo.service';
 import { MapaComponent } from './features/mapa/mapa.component';
 
@@ -20,6 +21,7 @@ export class App {
 
   constructor() {
     inject(SeoService).iniciar();
+    inject(AcessosService).iniciar();
     this.router.events.subscribe((e) => {
       if (e instanceof NavigationEnd) this.estatica.set(ehEstatica(e.urlAfterRedirects));
     });
