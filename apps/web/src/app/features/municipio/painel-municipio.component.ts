@@ -6,14 +6,14 @@ import { CompartilharComponent } from '../../shared/compartilhar.component';
 import { ControleSetoresComponent } from '../../shared/controle-setores.component';
 import { decimal, numero } from '../../shared/formatadores';
 import { CabecalhoPainelComponent } from '../mapa/cabecalho-painel.component';
-import { SeletoresComponent } from '../mapa/seletores.component';
+import { BuscaLugarComponent } from '../mapa/busca-lugar.component';
 
 const LIMITE_LISTA = 200;
 
 @Component({
   selector: 'app-painel-municipio',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CabecalhoPainelComponent, SeletoresComponent, CompartilharComponent, ControleSetoresComponent],
+  imports: [CabecalhoPainelComponent, BuscaLugarComponent, CompartilharComponent, ControleSetoresComponent],
   template: `
     <app-cabecalho-painel />
     <button type="button" class="btn sec voltar" (click)="estado.irParaMg()">&larr; Voltar para MG</button>
@@ -32,7 +32,7 @@ const LIMITE_LISTA = 200;
       <p class="erro" role="alert">{{ e }}</p>
     }
 
-    <app-seletores />
+    <app-busca-lugar />
     <app-controle-setores />
 
     <div class="ctrl">

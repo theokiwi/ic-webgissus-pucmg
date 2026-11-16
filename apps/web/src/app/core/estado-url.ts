@@ -26,6 +26,8 @@ export interface EstadoRota {
   ponto: Ponto | null;
   /** Visão `perto`: raio da busca em km. */
   raio: RaioKm;
+  /** Visão `perto`: nome do lugar buscado (bairro ou endereço); vazio quando o ponto veio do GPS ou do mapa. */
+  onde: string;
   /** Ficha: modo da rota até o estabelecimento. */
   modoRota: ModoRota | null;
   /** Ficha: origem da rota (4 casas decimais). */
@@ -43,6 +45,7 @@ export const ESTADO_INICIAL: EstadoRota = {
   q: '',
   ponto: null,
   raio: 30,
+  onde: '',
   modoRota: null,
   de: null,
   setores: false,
@@ -96,6 +99,7 @@ export function parseRota(url: string): EstadoRota {
       q: '',
       ponto: lerPonto(params.get('lat'), params.get('lon')),
       raio: params.get('raio') === '100' ? 100 : 30,
+      onde: (params.get('onde') ?? '').trim().slice(0, 80),
     };
   }
   if (segs.length === 2 && SO_DIGITOS.test(id)) {
@@ -131,6 +135,7 @@ export function montarUrl(e: EstadoRota): string {
     params.set('lat', String(arredondarCoord(e.ponto.lat)));
     params.set('lon', String(arredondarCoord(e.ponto.lon)));
     if (e.raio === 100) params.set('raio', '100');
+    if (e.onde.trim()) params.set('onde', e.onde.trim());
   }
   if (e.visao === 'estabelecimento' && e.modoRota) {
     params.set('rota', e.modoRota);

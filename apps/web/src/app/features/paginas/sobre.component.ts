@@ -74,6 +74,7 @@ const ATALHOS = [
             <li><b>Territórios de saúde:</b> macrorregiões e regiões de saúde da base territorial do DATASUS.</li>
             <li><b>Municípios, malha e população:</b> IBGE (Censo 2022).</li>
             <li><b>Mapa base:</b> © colaboradores do OpenStreetMap, servido pelo OpenFreeMap.</li>
+            <li><b>Busca de bairros e endereços:</b> Photon (komoot), sobre dados do OpenStreetMap.</li>
             <li><b>Rotas:</b> Valhalla, motor de roteamento de código aberto, sobre dados do OpenStreetMap.</li>
           </ul>
         </section>

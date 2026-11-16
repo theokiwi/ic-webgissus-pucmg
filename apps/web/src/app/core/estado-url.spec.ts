@@ -86,6 +86,14 @@ describe('URL ↔ estado', () => {
         expect(montarUrl(parseRota(url))).toBe(url);
       }
     });
+
+    it('guarda o nome do lugar buscado, só quando há ponto', () => {
+      const url = '/perto?lat=-19.9372&lon=-43.9356&onde=Savassi%2C+Belo+Horizonte&cat=hospital';
+      expect(parseRota(url)).toMatchObject({ onde: 'Savassi, Belo Horizonte', cat: 'hospital' });
+      expect(montarUrl(parseRota(url))).toBe('/perto?lat=-19.9372&lon=-43.9356&onde=Savassi,+Belo+Horizonte&cat=hospital');
+      expect(montarUrl({ ...ESTADO_INICIAL, visao: 'perto', onde: 'Savassi' })).toBe('/perto');
+      expect(parseRota(`/perto?lat=-19.9&lon=-43.9&onde=${'x'.repeat(200)}`).onde).toHaveLength(80);
+    });
   });
 
   describe('rota na ficha', () => {

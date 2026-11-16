@@ -8,13 +8,14 @@ import { ControleSetoresComponent } from '../../shared/controle-setores.componen
 import { decimal, numero, numeroCompacto } from '../../shared/formatadores';
 import { LegendaComponent, type ItemLegenda } from '../../shared/legenda.component';
 import { CabecalhoPainelComponent } from './cabecalho-painel.component';
+import { BuscaLugarComponent } from './busca-lugar.component';
 import { SeletoresComponent } from './seletores.component';
 
 /** Painel da visão MG / macrorregião / região de saúde. */
 @Component({
   selector: 'app-painel-mg',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CabecalhoPainelComponent, SeletoresComponent, LegendaComponent, ControleSetoresComponent, RouterLink],
+  imports: [CabecalhoPainelComponent, BuscaLugarComponent, SeletoresComponent, LegendaComponent, ControleSetoresComponent, RouterLink],
   template: `
     <app-cabecalho-painel />
 
@@ -47,8 +48,9 @@ import { SeletoresComponent } from './seletores.component';
       }
     </ul>
 
-    <app-seletores />
+    <app-busca-lugar />
     <button type="button" class="btn perto" (click)="estado.pertoDeMim()">Perto de mim</button>
+    <app-seletores />
     <app-controle-setores />
 
     <app-legenda [titulo]="tema().titulo" [unidade]="tema().unidade" [itens]="itensLegenda()" />

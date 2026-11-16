@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, Injectable, linkedSignal, PLATFORM_ID, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import type { BBox, CategoriaSlug, MacrorregiaoDTO, ModoRota, MunicipioResumoDTO, ProximoDTO } from '@webgissus/domain';
+import type { BBox, CategoriaSlug, LugarDTO, MacrorregiaoDTO, ModoRota, MunicipioResumoDTO, ProximoDTO } from '@webgissus/domain';
 import { normalizar } from '../shared/formatadores';
 import { ApiService } from './api.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -304,12 +304,24 @@ export class EstadoService {
 
   // --- perto de mim ---
 
-  /** Abre a visão "perto" num ponto (arredondado a 4 casas); sem ponto, mostra as opções para obtê-lo. */
-  irParaPerto(ponto: Ponto | null, substituir = false): void {
+  /**
+   * Abre a visão "perto" num ponto (arredondado a 4 casas); sem ponto, mostra as opções para obtê-lo.
+   * `onde` é o nome do lugar buscado; GPS e toque no mapa não têm nome.
+   */
+  irParaPerto(ponto: Ponto | null, substituir = false, onde = ''): void {
     this.ir(
-      { visao: 'perto', cd: null, cnes: null, cat: null, q: '', raio: 30, modoRota: null, de: null, ponto: ponto && ARREDONDA(ponto) },
+      {
+        visao: 'perto', cd: null, cnes: null, cat: null, q: '', raio: 30, modoRota: null, de: null,
+        ponto: ponto && ARREDONDA(ponto), onde: ponto ? onde : '',
+      },
       substituir,
     );
+  }
+
+  /** Bairro ou endereço escolhido na busca: estabelecimentos perto dele. */
+  irParaLugar(l: LugarDTO): void {
+    this.localizacao.cancelarEscolha();
+    this.irParaPerto({ lat: l.lat, lon: l.lon }, false, l.descricao ? `${l.nome}, ${l.descricao}` : l.nome);
   }
 
   /** "Perto de mim": abre o painel e pede a localização ao navegador. */

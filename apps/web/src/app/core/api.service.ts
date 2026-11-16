@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import type {
   BuscaItemDTO,
   EstabelecimentoDTO,
+  LugarDTO,
   MacrorregiaoDTO,
   MetaDTO,
   MunicipioDTO,
@@ -50,6 +51,12 @@ export class ApiService {
   busca(q: string, limite = 10): Observable<BuscaItemDTO[]> {
     const params = new HttpParams().set('q', q).set('limite', limite);
     return this.http.get<BuscaItemDTO[]>(`${this.base}/estabelecimentos/busca`, { params });
+  }
+
+  /** Bairros, ruas e endereços de MG (geocodificador OSM via servidor). */
+  lugares(q: string, limite = 5): Observable<LugarDTO[]> {
+    const params = new HttpParams().set('q', q).set('limite', limite);
+    return this.http.get<LugarDTO[]>(`${this.base}/lugares`, { params });
   }
 
   /** Estabelecimentos mais próximos de um ponto (distância em linha reta). */

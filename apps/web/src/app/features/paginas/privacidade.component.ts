@@ -41,7 +41,12 @@ import { PaginaComponent } from '../../shared/pagina.component';
         <h2>Serviços de terceiros</h2>
         <p>
           O mapa base é servido pelo OpenFreeMap (dados do OpenStreetMap). Ao carregar o mapa, o seu navegador faz requisições
-          a esse serviço, que pode registrar o endereço IP conforme a política dele. Ao compartilhar em uma rede social, você
+          a esse serviço, que pode registrar o endereço IP conforme a política dele.
+        </p>
+        <p>
+          Na busca por <b>bairro ou endereço</b>, o texto que você digita é enviado pelo <b>nosso servidor</b> ao Photon
+          (komoot), um buscador de endereços sobre dados do OpenStreetMap. O seu endereço IP não é repassado a ele, e não
+          guardamos o que foi pesquisado. A busca por município é feita no próprio aparelho e não sai dele. Ao compartilhar em uma rede social, você
           passa a estar sujeito à política de privacidade dessa rede.
         </p>
 
