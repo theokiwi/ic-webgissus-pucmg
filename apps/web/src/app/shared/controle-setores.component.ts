@@ -15,8 +15,11 @@ import { LegendaComponent, type ItemLegenda } from './legenda.component';
         <input type="checkbox" [checked]="ligado()" (change)="estado.definirSetores($any($event.target).checked)" />
         Setores censitários
       </label>
-      @if (!perto()) {
-        <p class="muted dica" role="status">Aproxime o mapa (zoom {{ zoomMin }} ou mais) para ver os setores.</p>
+      @if (ligado() && !perto()) {
+        <p class="muted dica" role="status">
+          Os setores aparecem com o mapa mais próximo.
+          <button type="button" class="btn sec aproximar" (click)="estado.aproximarSetores()">Aproximar o mapa</button>
+        </p>
       }
       @if (ligado()) {
         <app-legenda titulo="Densidade dos setores" unidade="hab/km²" [itens]="itens" />
@@ -28,11 +31,11 @@ import { LegendaComponent, type ItemLegenda } from './legenda.component';
     .alternar { display: flex; align-items: center; gap: 0.5rem; min-height: 44px; font-weight: 600; cursor: pointer; }
     .alternar input { width: 20px; height: 20px; }
     .dica { margin: 0; font-size: 0.8125rem; }
+    .aproximar { display: block; width: 100%; margin-top: 0.375rem; }
   `,
 })
 export class ControleSetoresComponent {
   protected readonly estado = inject(EstadoService);
-  protected readonly zoomMin = ZOOM_MINIMO_SETORES;
   protected readonly ligado = computed(() => this.estado.rota().setores);
   protected readonly perto = computed(() => this.estado.zoomMapa() >= ZOOM_MINIMO_SETORES);
   protected readonly itens: ItemLegenda[] = [

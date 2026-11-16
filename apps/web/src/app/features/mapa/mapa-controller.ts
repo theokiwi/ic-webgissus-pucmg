@@ -4,7 +4,7 @@ import { COR_SEM_DADO, expressaoCor } from '../../core/escala';
 import type { PontoFeature } from '../../core/geojson';
 import type { Tema } from '../../core/temas';
 import { decimal, numero } from '../../shared/formatadores';
-import { COR_SEM_DENSIDADE, CORES_DENSIDADE_SETOR, QUEBRAS_DENSIDADE_SETOR } from '../../core/setores';
+import { COR_SEM_DENSIDADE, CORES_DENSIDADE_SETOR, QUEBRAS_DENSIDADE_SETOR, ZOOM_MINIMO_SETORES } from '../../core/setores';
 
 export const ESTILO_BASE = 'https://tiles.openfreemap.org/styles/positron';
 const ATRIBUICAO_DADOS =
@@ -457,7 +457,7 @@ export class MapaController {
 
   /** Setores aparecem só com a camada ligada e zoom >= 9 (minzoom das camadas). */
   private setoresVisiveis(): boolean {
-    return this.setoresLigados && this.map.getZoom() >= 9;
+    return this.setoresLigados && this.map.getZoom() >= ZOOM_MINIMO_SETORES;
   }
 
   // --- API usada pelo componente ---
@@ -505,6 +505,12 @@ export class MapaController {
   definirSetores(ligado: boolean): void {
     this.setoresLigados = ligado;
     for (const id of ['setores-fill', 'setores-line']) this.map.setLayoutProperty(id, 'visibility', ligado ? 'visible' : 'none');
+  }
+
+  /** Aproxima até `zoom` mantendo o centro visível; não faz nada se o mapa já estiver mais perto. */
+  aproximarAte(zoom: number, folgas: Folgas): void {
+    if (this.map.getZoom() >= zoom) return;
+    this.map.easeTo({ zoom, padding: folgas, duration: 800 });
   }
 
   /** Resultados de "perto de mim", numerados na ordem da lista. */

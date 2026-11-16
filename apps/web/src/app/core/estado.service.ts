@@ -375,7 +375,16 @@ export class EstadoService {
 
   // --- setores ---
 
+  /** Pedidos para o mapa aproximar até os setores aparecerem (contador: cada pedido é um valor novo). */
+  readonly pedidoZoomSetores = signal(0);
+
+  /** Liga/desliga os setores; ao ligar, o mapa aproxima até o zoom em que eles aparecem. */
   definirSetores(ligado: boolean): void {
     this.ir({ setores: ligado }, true);
+    if (ligado) this.aproximarSetores();
+  }
+
+  aproximarSetores(): void {
+    this.pedidoZoomSetores.update((n) => n + 1);
   }
 }
