@@ -10,28 +10,34 @@ import { LegendaComponent, type ItemLegenda } from './legenda.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [LegendaComponent],
   template: `
-    <div class="setores">
+    <div class="setores cartao">
       <label class="alternar">
         <input type="checkbox" [checked]="ligado()" (change)="estado.definirSetores($any($event.target).checked)" />
-        Setores censitários
+        <span>
+          Setores censitários
+          <small class="muted">Densidade da população nas áreas do Censo 2022 (IBGE)</small>
+        </span>
       </label>
-      @if (ligado() && !perto()) {
-        <p class="muted dica" role="status">
-          Os setores aparecem com o mapa mais próximo.
-          <button type="button" class="btn sec aproximar" (click)="estado.aproximarSetores()">Aproximar o mapa</button>
-        </p>
-      }
       @if (ligado()) {
-        <app-legenda titulo="Densidade dos setores" unidade="hab/km²" [itens]="itens" />
+        <div class="corpo">
+          @if (!perto()) {
+            <p class="muted dica" role="status">Os setores aparecem com o mapa mais próximo.</p>
+            <button type="button" class="btn sec aproximar" (click)="estado.aproximarSetores()">Aproximar o mapa</button>
+          }
+          <app-legenda titulo="Densidade dos setores" unidade="hab/km²" [itens]="itens" />
+        </div>
       }
     </div>
   `,
   styles: `
-    .setores { margin: 0.75rem 0; padding: 0.5rem 0.75rem; border: 1px solid var(--borda); border-radius: 8px; }
-    .alternar { display: flex; align-items: center; gap: 0.5rem; min-height: 44px; font-weight: 600; cursor: pointer; }
-    .alternar input { width: 20px; height: 20px; }
+    :host { display: block; }
+    .alternar { display: flex; align-items: center; gap: 0.75rem; min-height: 56px; padding: 0.375rem 0; cursor: pointer; }
+    .alternar input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--primaria); }
+    .alternar span { display: flex; flex-direction: column; font-weight: 600; font-size: 0.9375rem; }
+    .alternar small { font-weight: 400; font-size: 0.75rem; }
+    .corpo { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0 0.875rem; border-top: 1px solid var(--borda); }
     .dica { margin: 0; font-size: 0.8125rem; }
-    .aproximar { display: block; width: 100%; margin-top: 0.375rem; }
+    .aproximar { width: 100%; }
   `,
 })
 export class ControleSetoresComponent {

@@ -13,7 +13,7 @@ const ATRASO_MS = 300;
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="ctrl">
-      <label for="busca-global">Buscar estabelecimento em MG</label>
+      <label for="busca-global">Unidade de saúde pelo nome</label>
       <input
         id="busca-global"
         type="search"
@@ -47,7 +47,10 @@ const ATRASO_MS = 300;
     }
   `,
   styles: `
-    .resumo-busca { min-height: 1.1em; font-size: 0.8125rem; }
+    :host { display: block; }
+    .resumo-busca { font-size: 0.8125rem; }
+    .resumo-busca:not(:empty) { margin-top: 0.375rem; }
+    .lista { margin-top: 0.375rem; }
   `,
 })
 export class BuscaGlobalComponent {

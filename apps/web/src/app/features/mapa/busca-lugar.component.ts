@@ -70,7 +70,11 @@ const ROTULO_TIPO: Record<TipoLugar, string> = {
     }
   `,
   styles: `
-    .resumo-busca { min-height: 1.1em; font-size: 0.8125rem; }
+    :host { display: block; }
+    .resumo-busca { font-size: 0.8125rem; }
+    .resumo-busca:not(:empty) { margin-top: 0.375rem; }
+    .lista { margin-top: 0.375rem; }
+    .lista li > button .muted { padding-left: 0; }
   `,
 })
 export class BuscaLugarComponent {

@@ -71,3 +71,11 @@ select, input[type='search'], input[type='text'] {
 
 /* Controle "Perto de mim" do mapa */
 .maplibregl-ctrl button.ctrl-perto { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; }
+
+/* Painel lateral: seções com título e ritmo de espaçamento único. */
+.secao { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 0; border-top: 1px solid var(--borda); }
+.secao .ctrl { margin: 0; }
+.secao-titulo {
+  margin: 0; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-suave);
+}
+.cartao { border: 1px solid var(--borda); border-radius: 10px; background: var(--superficie); padding: 0 0.875rem; }
