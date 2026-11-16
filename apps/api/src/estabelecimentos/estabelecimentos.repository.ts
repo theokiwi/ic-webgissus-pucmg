@@ -31,6 +31,7 @@ export interface EstabelecimentoRow {
   categoria: string;
   tp_unidade: number;
   cd_municipio: string;
+  cd6_municipio: string;
   municipio: string;
   logradouro: string | null;
   numero: string | null;
@@ -102,7 +103,7 @@ export class EstabelecimentosRepository {
   obter(cnes: string) {
     return this.db.primeira<EstabelecimentoRow>(
       `SELECT e.cnes::text AS cnes, e.nome, e.razao_social, e.categoria, e.tp_unidade::int AS tp_unidade,
-              e.cd_municipio::text AS cd_municipio, m.nome AS municipio,
+              e.cd_municipio::text AS cd_municipio, m.cd6::text AS cd6_municipio, m.nome AS municipio,
               e.logradouro, e.numero, e.complemento, e.bairro, e.cep::text AS cep,
               e.telefone, e.email, e.natureza, e.sempre_aberto, e.turno, e.coord_ok,
               to_char(e.atualizado_em, 'YYYY-MM-DD') AS atualizado_em,

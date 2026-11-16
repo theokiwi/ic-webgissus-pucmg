@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AcessosModule } from './acessos/acessos.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { EstabelecimentosModule } from './estabelecimentos/estabelecimentos.module.js';
 import { HealthController } from './health/health.controller.js';
@@ -19,6 +20,7 @@ import { RotaModule } from './rota/rota.module.js';
     EstabelecimentosModule,
     RotaModule,
     LugaresModule,
+    AcessosModule,
   ],
   controllers: [HealthController],
 })

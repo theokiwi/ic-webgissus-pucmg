@@ -51,6 +51,8 @@ export class EstabelecimentosService {
     ]);
     return {
       cnes: r.cnes,
+      // CO_UNIDADE: o município da unidade vem dos 6 primeiros dígitos dele na carga (CLAUDE.md).
+      codigoUnidade: r.cd6_municipio + r.cnes,
       nome: r.nome,
       razaoSocial: r.razao_social,
       categoria: r.categoria as CategoriaSlug,

@@ -215,6 +215,7 @@ describe('estabelecimentos', () => {
     const r = await http().get('/api/estabelecimentos/1000001').expect(200);
     expect(r.body).toMatchObject({
       cnes: '1000001',
+      codigoUnidade: '3100001000001',
       nome: 'UBS Centro Saúde',
       razaoSocial: 'Prefeitura de Alfa',
       categoria: 'atencao_basica',
@@ -306,6 +307,32 @@ describe('rota', () => {
       await sem.close();
       process.env.VALHALLA_URL = valhallaUrl;
     }
+  });
+});
+
+describe('acessos', () => {
+  const ig = { origem: 'instagram', meio: 'social', campanha: 'divulgacao' };
+
+  it('POST soma por dia, origem, meio e campanha; GET lista os totais', async () => {
+    await http().post('/api/acessos').send(ig).expect(204);
+    await http().post('/api/acessos').send(ig).expect(204);
+    await http().post('/api/acessos').send({ origem: 'cartaz', meio: 'impresso', campanha: 'divulgacao' }).expect(204);
+    const r = await http().get('/api/acessos?dias=1').expect(200);
+    expect(r.headers['cache-control']).toBe('no-store');
+    const sem = r.body.map(({ dia, ...resto }: any) => {
+      expect(dia).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      return resto;
+    });
+    expect(sem).toEqual([
+      { ...ig, n: 2 },
+      { origem: 'cartaz', meio: 'impresso', campanha: 'divulgacao', n: 1 },
+    ]);
+  });
+
+  it('valida o corpo e o período', async () => {
+    await http().post('/api/acessos').send({ ...ig, origem: 'Instagram!' }).expect(400);
+    await http().post('/api/acessos').send({ origem: 'x' }).expect(400);
+    await http().get('/api/acessos?dias=400').expect(400);
   });
 });
 

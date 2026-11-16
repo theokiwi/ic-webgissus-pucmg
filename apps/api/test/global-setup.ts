@@ -18,8 +18,10 @@ export default async function setup() {
   await cliente.connect();
   try {
     const schema = await readFile(resolve(import.meta.dirname, '../../../infra/db/001_schema.sql'), 'utf8');
+    const acessos = await readFile(resolve(import.meta.dirname, '../../../infra/db/002_acessos.sql'), 'utf8');
     const seed = await readFile(resolve(import.meta.dirname, 'fixtures/seed.sql'), 'utf8');
     await cliente.query(schema);
+    await cliente.query(acessos);
     await cliente.query(seed);
   } finally {
     await cliente.end();
