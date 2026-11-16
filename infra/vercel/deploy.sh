@@ -30,8 +30,9 @@ if [[ ! -f .vercel/project.json ]]; then
 fi
 
 echo "▸ DATABASE_URL ($ALVO) — valor não exibido"
-vercel env rm DATABASE_URL "$ALVO" --yes >/dev/null 2>&1 || true
-printf '%s' "$URL_BANCO" | vercel env add DATABASE_URL "$ALVO" >/dev/null
+# Vercel CLI 65+: --environment e --force (o argumento posicional de ambiente saiu e falha).
+# O valor vai pela entrada padrão, nunca na linha de comando.
+printf '%s' "$URL_BANCO" | vercel env add DATABASE_URL --environment "$ALVO" --force --sensitive >/dev/null
 
 node infra/vercel/build.mjs
 
