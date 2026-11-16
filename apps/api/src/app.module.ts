@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module.js';
 import { EstabelecimentosModule } from './estabelecimentos/estabelecimentos.module.js';
 import { HealthController } from './health/health.controller.js';
+import { LugaresModule } from './lugares/lugares.module.js';
 import { MetaModule } from './meta/meta.module.js';
 import { MunicipiosModule } from './municipios/municipios.module.js';
 import { RegioesModule } from './regioes/regioes.module.js';
@@ -17,6 +18,7 @@ import { RotaModule } from './rota/rota.module.js';
     MunicipiosModule,
     EstabelecimentosModule,
     RotaModule,
+    LugaresModule,
   ],
   controllers: [HealthController],
 })

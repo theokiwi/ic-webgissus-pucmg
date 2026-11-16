@@ -123,6 +123,16 @@ export function parseBusca(q: Record<string, Texto>): BuscaParams {
   return { q: termo, limite: parseInteiroLimitado(q.limite, 'limite', LIMITE_BUSCA) };
 }
 
+export const LIMITE_LUGARES = { padrao: 5, max: 10 } as const;
+
+export function parseLugares(q: Record<string, Texto>): BuscaParams {
+  const termo = (q.q ?? '').trim().slice(0, 100);
+  if (termo.length < BUSCA_MIN_CHARS) {
+    throw new BadRequestException(`q deve ter ao menos ${BUSCA_MIN_CHARS} caracteres`);
+  }
+  return { q: termo, limite: parseInteiroLimitado(q.limite, 'limite', LIMITE_LUGARES) };
+}
+
 export const MODOS: readonly ModoRota[] = ['auto', 'pedestre', 'bicicleta'];
 
 export interface RotaParams {

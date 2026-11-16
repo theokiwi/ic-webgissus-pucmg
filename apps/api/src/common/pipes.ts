@@ -3,6 +3,7 @@ import {
   parseBusca,
   parseCategoria,
   parseDigitos,
+  parseLugares,
   parseProximos,
   parseRota,
   type BuscaParams,
@@ -46,6 +47,13 @@ export class ProximosPipe implements PipeTransform<Record<string, Texto>, Proxim
 export class BuscaPipe implements PipeTransform<Record<string, Texto>, BuscaParams> {
   transform(q: Record<string, Texto>) {
     return parseBusca(q);
+  }
+}
+
+@Injectable()
+export class LugaresPipe implements PipeTransform<Record<string, Texto>, BuscaParams> {
+  transform(q: Record<string, Texto>) {
+    return parseLugares(q);
   }
 }
 
