@@ -68,6 +68,8 @@ export interface HorarioDTO {
 /** GET /api/estabelecimentos/:cnes */
 export interface EstabelecimentoDTO {
   cnes: string;
+  /** CO_UNIDADE do CNES: município DATASUS (6 dígitos) + CNES; usado no link da ficha oficial. */
+  codigoUnidade: string;
   nome: string;
   razaoSocial: string | null;
   categoria: CategoriaSlug;
@@ -89,6 +91,7 @@ export interface EstabelecimentoDTO {
   servicos: { servico: string; classificacao: string | null; sus: boolean }[];
   atendimentos: { atendimento: string; sus: boolean }[];
   coordOk: boolean;
+  /** Última atualização do cadastro pela unidade (DT_ATUALIZACAO do CNES). */
   atualizadoEm: string | null; // 'AAAA-MM-DD'
   lon: number;
   lat: number;
@@ -140,4 +143,13 @@ export interface RotaDTO {
 export interface ErroDTO {
   statusCode: number;
   message: string;
+}
+
+/** Linha de GET /api/acessos: acessos contados por dia (fuso de Brasília), origem, meio e campanha (ADR 0009). */
+export interface AcessoDiarioDTO {
+  dia: string; // 'AAAA-MM-DD'
+  origem: string;
+  meio: string;
+  campanha: string;
+  n: number;
 }
