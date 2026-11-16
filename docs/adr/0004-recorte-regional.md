@@ -1,6 +1,6 @@
 # 0004 · Recorte regional pelas regiões de saúde
 
-**Status:** aceito · 2026-11-14
+**Status:** aceito · 2026-11-14 · navegação substituída pelo [0008](0008-busca-por-lugar.md); a fonte territorial continua valendo
 
 ## Contexto
 Com só MG, o seletor "Estado" da referência perde sentido e um seletor com 853 municípios é ruim de usar. O SUS-MG organiza o encaminhamento por regiões e macrorregiões de saúde (PDR/SES-MG), que é a divisão relevante para o tema.

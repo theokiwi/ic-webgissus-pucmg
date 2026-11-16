@@ -3,6 +3,7 @@ import {
   parseBusca,
   parseCategoria,
   parseDigitos,
+  parseLugares,
   parseParLatLon,
   parseProximos,
   parseRota,
@@ -69,6 +70,18 @@ describe('parseBusca', () => {
     expect(parseBusca({ q: ' sau ' })).toEqual({ q: 'sau', limite: 10 });
     expect(() => parseBusca({ q: 'sa' })).toThrow(BadRequestException);
     expect(() => parseBusca({})).toThrow(BadRequestException);
+  });
+});
+
+describe('parseLugares', () => {
+  it('apara o termo, usa limite 5 e corta textos longos', () => {
+    expect(parseLugares({ q: ' savassi ' })).toEqual({ q: 'savassi', limite: 5 });
+    expect(parseLugares({ q: 'x'.repeat(300) }).q).toHaveLength(100);
+  });
+
+  it('rejeita termo curto e limite acima de 10', () => {
+    expect(() => parseLugares({ q: 'sa' })).toThrow(BadRequestException);
+    expect(() => parseLugares({ q: 'savassi', limite: '11' })).toThrow(BadRequestException);
   });
 });
 

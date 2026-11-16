@@ -6,16 +6,18 @@ import { CompartilharComponent } from '../../shared/compartilhar.component';
 import { ControleSetoresComponent } from '../../shared/controle-setores.component';
 import { decimal, numero } from '../../shared/formatadores';
 import { CabecalhoPainelComponent } from '../mapa/cabecalho-painel.component';
-import { SeletoresComponent } from '../mapa/seletores.component';
+import { BuscaGlobalComponent } from '../mapa/busca-global.component';
+import { BuscaLugarComponent } from '../mapa/busca-lugar.component';
 
 const LIMITE_LISTA = 200;
 
 @Component({
   selector: 'app-painel-municipio',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CabecalhoPainelComponent, SeletoresComponent, CompartilharComponent, ControleSetoresComponent],
+  imports: [CabecalhoPainelComponent, BuscaGlobalComponent, BuscaLugarComponent, CompartilharComponent, ControleSetoresComponent],
   template: `
     <app-cabecalho-painel />
+    <app-busca-global />
     <button type="button" class="btn sec voltar" (click)="estado.irParaMg()">&larr; Voltar para MG</button>
 
     @if (estado.municipio.dado(); as m) {
@@ -32,7 +34,7 @@ const LIMITE_LISTA = 200;
       <p class="erro" role="alert">{{ e }}</p>
     }
 
-    <app-seletores />
+    <app-busca-lugar />
     <app-controle-setores />
 
     <div class="ctrl">
@@ -93,6 +95,7 @@ const LIMITE_LISTA = 200;
   styles: `
     .rodape-links { font-size: 0.75rem; }
     .voltar { margin: 0.5rem 0; width: 100%; }
+    app-controle-setores { margin: 0.75rem 0; }
     .titulo { margin: 0.25rem 0 0; font-size: 1.25rem; }
     .sub { margin: 0 0 0.5rem; font-size: 0.8125rem; }
     .sub2 { font-size: 0.875rem; margin: 0.5rem 0 0.25rem; }

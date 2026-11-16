@@ -10,7 +10,7 @@ import { descreverMudanca, rotuloSituacao } from '../../shared/situacao';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="cab">
-      <h1>Perto de mim</h1>
+      <h1>{{ onde() ? 'Perto de ' + onde() : 'Perto de mim' }}</h1>
       <button type="button" class="btn sec" (click)="estado.irParaMg()">&larr; Voltar para MG</button>
     </header>
 
@@ -185,6 +185,7 @@ export class PainelPertoComponent {
   protected readonly ponto = computed(() => this.estado.rota().ponto);
   protected readonly cat = computed(() => this.estado.rota().cat);
   protected readonly raio = computed(() => this.estado.rota().raio);
+  protected readonly onde = computed(() => this.estado.rota().onde);
 
   private readonly agora = signal(new Date());
 

@@ -12,6 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { EstadoService } from '../../core/estado.service';
+import { ZOOM_MINIMO_SETORES } from '../../core/setores';
 import { BottomSheetComponent, type TamanhoFolha } from '../../shared/bottom-sheet.component';
 import { TelaService } from '../../shared/tela.service';
 import { FichaComponent } from '../estabelecimento/ficha.component';
@@ -171,6 +172,11 @@ export class MapaComponent {
     effect(() => {
       const c = comMapa();
       if (c) c.definirSetores(this.estado.rota().setores);
+    });
+    effect(() => {
+      const c = comMapa();
+      const pedido = this.estado.pedidoZoomSetores();
+      if (c && pedido > 0) untracked(() => c.aproximarAte(ZOOM_MINIMO_SETORES, this.folgas(false)));
     });
     effect(() => {
       const c = comMapa();

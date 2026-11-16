@@ -1,12 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { EstadoService } from '../../core/estado.service';
 import { competenciaIso } from '../../shared/formatadores';
-import { BuscaGlobalComponent } from './busca-global.component';
 
 @Component({
   selector: 'app-cabecalho-painel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BuscaGlobalComponent],
   template: `
     <header class="cabecalho">
       <div>
@@ -20,12 +18,11 @@ import { BuscaGlobalComponent } from './busca-global.component';
       </div>
       <button type="button" class="btn sec" (click)="estado.limpar()">Limpar</button>
     </header>
-    <app-busca-global />
   `,
   styles: `
-    .cabecalho { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .cabecalho { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; padding-bottom: 1rem; }
+    p { margin: 0.125rem 0 0; font-size: 0.8125rem; line-height: 1.35; }
     h1 { font-size: 1.125rem; margin: 0; }
-    p { margin: 0; font-size: 0.8125rem; }
   `,
 })
 export class CabecalhoPainelComponent {

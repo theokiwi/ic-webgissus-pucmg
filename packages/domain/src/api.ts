@@ -113,6 +113,18 @@ export interface BuscaItemDTO {
   bairro: string | null;
 }
 
+export type TipoLugar = 'bairro' | 'rua' | 'endereco' | 'cidade' | 'local';
+
+/** GET /api/lugares?q=&limite=5 — bairros, ruas e endereços de MG (geocodificador OSM, ADR 0008). */
+export interface LugarDTO {
+  nome: string;
+  /** Contexto legível: rua, bairro e município, sem repetir o nome. */
+  descricao: string;
+  tipo: TipoLugar;
+  lat: number;
+  lon: number;
+}
+
 export type ModoRota = 'auto' | 'pedestre' | 'bicicleta';
 
 /** GET /api/rota?de=lat,lon&para=lat,lon&modo=auto */

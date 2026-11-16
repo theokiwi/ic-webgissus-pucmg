@@ -11,7 +11,7 @@
 
 Contrato: `packages/domain/src/api.ts` (importe só **tipos**: `import type {...} from '@webgissus/domain'`; categorias em runtime via `@webgissus/domain/categorias.json`). Swagger em `/api/docs`; tiles estáticos (HTTP Range) em `/tiles`; health em `/api/health`.
 
-- Estrutura: um módulo por assunto (`meta`, `regioes`, `municipios`, `estabelecimentos`, `rota`, `database`), SQL explícito e parametrizado em `*.repository.ts`; validação em `common/params.ts` (funções puras testadas) + `common/pipes.ts`. Sem ORM.
+- Estrutura: um módulo por assunto (`meta`, `regioes`, `municipios`, `estabelecimentos`, `rota`, `lugares`, `database`), SQL explícito e parametrizado em `*.repository.ts`; validação em `common/params.ts` (funções puras testadas) + `common/pipes.ts`. Sem ORM.
 - Injeção sempre com `@Inject(Classe)` explícito: o Vitest não emite `emitDecoratorMetadata`.
 - Configuração HTTP (prefixo `api`, CORS, tiles, Swagger) em `src/setup.ts`, usada por `main.ts` e pelos e2e.
 - "Perto de mim" (`/estabelecimentos/proximos`) só considera `coord_ok = true` (ADR 0003).
@@ -37,5 +37,6 @@ Variáveis de ambiente (lidas de `.env` em `apps/api` ou na raiz):
 | `TILES_DIR` | `<repo>/data/processed/tiles` | diretório servido em `/tiles` |
 | `VALHALLA_URL` | (vazio) | base do Valhalla; sem ela `/api/rota` → 503 e `/api/meta` traz `rotas: false` |
 | `PG_POOL_MAX` | `10` | conexões por instância (3 na Vercel) |
+| `GEOCODER_URL` | `https://photon.komoot.io` | Photon (geocodificador OSM) usado por `/api/lugares` (ADR 0008) |
 
 Na Vercel (ADR 0007) a entrada é `src/vercel.ts`, empacotada por `infra/vercel/build.mjs`; sem tiles nem Swagger.

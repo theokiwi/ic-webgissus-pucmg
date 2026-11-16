@@ -27,7 +27,7 @@ export interface ItemLegenda {
     </div>
   `,
   styles: `
-    .legenda { font-size: 0.8125rem; margin: 0.75rem 0; }
+    .legenda { font-size: 0.8125rem; margin: 0; }
     ul { list-style: none; margin: 0.25rem 0 0; padding: 0; }
     li { display: flex; align-items: center; gap: 0.5rem; padding: 1px 0; }
     .amostra { width: 18px; height: 12px; border-radius: 2px; flex: none; }
