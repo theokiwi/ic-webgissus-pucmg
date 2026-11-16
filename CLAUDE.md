@@ -33,6 +33,7 @@ pnpm rotas:preparar              # baixa OSM, recorta MG e gera tiles do Valhall
 pnpm rotas:up / rotas:down       # Valhalla em 127.0.0.1:8002 (perfil `rotas`; VALHALLA_URL na API)
 pnpm banco:publicar              # copia o PostGIS local para o Neon (.env.vercel)
 pnpm deploy:vercel               # build + deploy de produção na Vercel (ADR 0007)
+pnpm divulgacao:qr <url-pública>  # QR codes de /cartaz, /insta e /whats em data/divulgacao (ADR 0009)
 pipelines/run.sh spike/explorar_cnes.py 202609   # roda script Python no container
 pipelines/test.sh                                # pytest dos pipelines
 ```

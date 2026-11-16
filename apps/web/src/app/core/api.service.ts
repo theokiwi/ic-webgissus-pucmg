@@ -9,6 +9,7 @@ import type {
   MunicipioDTO,
   ModoRota,
   MunicipioResumoDTO,
+  OrigemAcesso,
   ProximoDTO,
   RotaDTO,
 } from '@webgissus/domain';
@@ -51,6 +52,11 @@ export class ApiService {
   busca(q: string, limite = 10): Observable<BuscaItemDTO[]> {
     const params = new HttpParams().set('q', q).set('limite', limite);
     return this.http.get<BuscaItemDTO[]>(`${this.base}/estabelecimentos/busca`, { params });
+  }
+
+  /** Soma um acesso à origem (ADR 0009); só origem, meio e campanha são enviados. */
+  registrarAcesso(o: OrigemAcesso): Observable<void> {
+    return this.http.post<void>(`${this.base}/acessos`, o);
   }
 
   /** Bairros, ruas e endereços de MG (geocodificador OSM via servidor). */

@@ -27,15 +27,23 @@ import { PaginaComponent } from '../../shared/pagina.component';
         <p>
           Não usamos cookies de rastreamento, publicidade nem ferramentas de análise de terceiros. O navegador pode guardar
           arquivos do próprio aplicativo (cache do PWA) para que o site carregue mais rápido e funcione com conexão ruim; eles
-          não identificam você e podem ser apagados nas configurações do navegador.
+          não identificam você e podem ser apagados nas configurações do navegador. Quando você chega por um link de
+          divulgação ou compartilhamento, a aba guarda uma marca temporária (apagada ao fechá-la) para não contar o mesmo
+          acesso duas vezes se a página for recarregada.
         </p>
 
-        <h2>Links compartilhados e UTM</h2>
+        <h2>Links compartilhados e contagem de acessos</h2>
         <p>
           Quando você usa o botão “Compartilhar”, o link gerado ganha parâmetros <code>utm_source</code>,
           <code>utm_medium=social</code> e <code>utm_campaign=compartilhar</code>, que indicam por qual rede o link foi enviado.
-          Só os links compartilhados levam esses parâmetros; a navegação normal, não. Eles servem para saber se o
-          compartilhamento funciona, sem identificar pessoas.
+          Os links de divulgação do projeto (Instagram, WhatsApp e o QR code dos cartazes) levam parâmetros parecidos, com
+          <code>utm_campaign=divulgacao</code>. A navegação normal não leva nenhum deles.
+        </p>
+        <p>
+          Quando o site é aberto por um desses links, ele soma <b>+1</b> num contador do dia para aquela origem (por
+          exemplo, “cartaz” ou “whatsapp”). <b>Só isso é guardado</b>: data, origem, meio e campanha. Não registramos endereço
+          IP, aparelho, página visitada, localização nem qualquer identificador, e não usamos cookies para isso, então não é
+          possível saber quem acessou. A contagem serve apenas para saber quais formas de divulgação funcionam.
         </p>
 
         <h2>Serviços de terceiros</h2>

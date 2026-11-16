@@ -12,11 +12,20 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { categoria, dataLocal, rotuloCategoria, situacaoFuncionamento, type EstabelecimentoDTO } from '@webgissus/domain';
+import {
+  cadastroDesatualizado,
+  categoria,
+  dataLocal,
+  MESES_CADASTRO_ANTIGO,
+  rotuloCategoria,
+  situacaoFuncionamento,
+  type EstabelecimentoDTO,
+} from '@webgissus/domain';
 import { EstadoService } from '../../core/estado.service';
 import { CompartilharComponent } from '../../shared/compartilhar.component';
+import { SeloTransparenciaComponent } from '../../shared/selo-transparencia.component';
 import { ComoChegarComponent } from '../rota/como-chegar.component';
-import { competenciaIso, enderecoLinhas, NOMES_DIA, ORDEM_DIAS, telefone, telefoneDigitos } from '../../shared/formatadores';
+import { dataBr, enderecoLinhas, NOMES_DIA, ORDEM_DIAS, telefone, telefoneDigitos } from '../../shared/formatadores';
 import { descreverMudanca, rotuloSituacao } from '../../shared/situacao';
 
 const NATUREZA: Record<EstabelecimentoDTO['natureza'], string> = {
@@ -29,7 +38,7 @@ const NATUREZA: Record<EstabelecimentoDTO['natureza'], string> = {
 
 @Component({
   selector: 'app-ficha',
-  imports: [CompartilharComponent, ComoChegarComponent],
+  imports: [CompartilharComponent, ComoChegarComponent, SeloTransparenciaComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="topo">
@@ -58,6 +67,13 @@ const NATUREZA: Record<EstabelecimentoDTO['natureza'], string> = {
           <span> · {{ mudanca() }}</span>
         }
       </p>
+
+      @if (desatualizado()) {
+        <p class="aviso-cadastro" role="note">
+          <b>Cadastro antigo:</b> esta unidade não atualiza seus dados no CNES há mais de {{ anosLimite }} anos (desde
+          {{ atualizadoBr() }}). Horários e serviços podem ter mudado. Confirme por telefone antes de ir.
+        </p>
+      }
 
       <app-compartilhar [contexto]="contextoCompartilhar()" />
 
@@ -140,10 +156,12 @@ const NATUREZA: Record<EstabelecimentoDTO['natureza'], string> = {
         </section>
       }
 
-      <p class="aviso" role="note">
-        Informações do CNES (competência {{ competencia() }}). Confirme por telefone antes de ir. Em emergência, ligue 192
-        (SAMU).
-      </p>
+      <app-selo-transparencia
+        [competencia]="f.competencia"
+        [atualizadoEm]="f.atualizadoEm"
+        [codigoUnidade]="f.codigoUnidade"
+        [publicadoEm]="estado.meta.dado()?.atualizadoEm ?? null"
+      />
     }
   `,
   styles: `
@@ -162,7 +180,7 @@ const NATUREZA: Record<EstabelecimentoDTO['natureza'], string> = {
     .horarios tr.hoje { font-weight: 700; }
     .servicos { margin: 0; padding-left: 1.1rem; font-size: 0.875rem; }
     .selo-sus { background: #1b5e20; color: #fff; border-radius: 4px; padding: 0 5px; font-size: 0.6875rem; font-weight: 700; margin-left: 4px; }
-    .aviso { margin-top: 1rem; padding: 0.625rem 0.75rem; border-radius: 8px; background: var(--destaque); font-size: 0.8125rem; }
+    .aviso-cadastro { margin: 0 0 0.75rem; padding: 0.5rem 0.75rem; border-radius: 8px; background: #fff3cd; color: #5f4300; border-left: 5px solid #b26a00; font-size: 0.875rem; }
   `,
 })
 export class FichaComponent {
@@ -194,7 +212,13 @@ export class FichaComponent {
   protected readonly rotulo = computed(() => (this.d() ? rotuloCategoria(this.d()!.categoria) : ''));
   protected readonly endereco = computed(() => (this.d() ? enderecoLinhas(this.d()!.endereco) : []));
   protected readonly natureza = computed(() => (this.d() ? NATUREZA[this.d()!.natureza] : ''));
-  protected readonly competencia = computed(() => competenciaIso(this.d()?.competencia ?? ''));
+  /** Alerta de cadastro antigo: mais de 24 meses sem atualização (ADR 0009). */
+  protected readonly desatualizado = computed(() => {
+    const f = this.d();
+    return !!f && cadastroDesatualizado(f.atualizadoEm, f.competencia);
+  });
+  protected readonly atualizadoBr = computed(() => dataBr(this.d()?.atualizadoEm));
+  protected readonly anosLimite = MESES_CADASTRO_ANTIGO / 12;
   protected readonly tel = computed(() => {
     const digitos = telefoneDigitos(this.d()?.telefone);
     return digitos ? { digitos, texto: telefone(this.d()?.telefone) } : null;

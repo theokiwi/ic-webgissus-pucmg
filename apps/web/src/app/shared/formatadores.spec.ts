@@ -1,4 +1,4 @@
-import { competenciaIso, decimal, distancia, duracao, enderecoLinhas, normalizar, numero, telefone, telefoneDigitos } from './formatadores';
+import { competenciaIso, dataBr, decimal, distancia, duracao, enderecoLinhas, normalizar, numero, telefone, telefoneDigitos } from './formatadores';
 
 describe('formatadores pt-BR', () => {
   it('numero usa ponto como separador de milhar', () => {
@@ -43,5 +43,18 @@ describe('formatadores pt-BR', () => {
     expect(duracao(3600)).toBe('1 h');
     expect(duracao(3900)).toBe('1 h 05 min');
     expect(duracao(-1)).toBe('—');
+  });
+});
+
+describe('dataBr', () => {
+  it('formata data simples e ISO com hora no fuso de Brasília', () => {
+    expect(dataBr('2025-03-12')).toBe('12/03/2025');
+    // 01h UTC ainda é o dia anterior em Brasília.
+    expect(dataBr('2026-10-01T01:00:00.000Z')).toBe('30/09/2026');
+  });
+
+  it('vazio para ausente ou inválido', () => {
+    expect(dataBr(null)).toBe('');
+    expect(dataBr('ontem')).toBe('');
   });
 });

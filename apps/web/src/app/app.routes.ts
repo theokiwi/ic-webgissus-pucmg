@@ -1,4 +1,12 @@
 import { Routes } from '@angular/router';
+import { ATALHOS_DIVULGACAO, urlDivulgacao, type AtalhoDivulgacao } from '@webgissus/domain';
+
+/** Atalhos de divulgação (ADR 0009): /insta, /whats e /cartaz levam ao mapa com os utm_* do canal. */
+const atalhos: Routes = (Object.keys(ATALHOS_DIVULGACAO) as AtalhoDivulgacao[]).map((a) => ({
+  path: a,
+  pathMatch: 'full',
+  redirectTo: urlDivulgacao(a),
+}));
 
 /**
  * As rotas só existem para o Router reconhecer as URLs e manter o histórico;
@@ -11,6 +19,7 @@ export const routes: Routes = [
   { path: 'municipio/:cd', children: [] },
   { path: 'estabelecimento/:cnes', children: [] },
   { path: 'perto', children: [] },
+  ...atalhos,
   {
     path: 'sobre',
     title: 'Sobre o projeto | WebGIS SUS-MG',

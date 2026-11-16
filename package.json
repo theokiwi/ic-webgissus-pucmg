@@ -19,7 +19,8 @@
     "rotas:down": "docker compose -f infra/docker-compose.yml --profile rotas stop valhalla",
     "build:vercel": "node infra/vercel/build.mjs",
     "deploy:vercel": "infra/vercel/deploy.sh",
-    "banco:publicar": "infra/vercel/publicar-banco.sh"
+    "banco:publicar": "infra/vercel/publicar-banco.sh",
+    "divulgacao:qr": "node apps/web/scripts/gerar-qr-divulgacao.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",
