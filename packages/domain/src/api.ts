@@ -64,6 +64,13 @@ export interface HorarioDTO {
   abre: string; // 'HH:MM'
   fecha: string; // 'HH:MM'
 }
+/** CO_NATUREZA_JUR do CNES, classificado pelo 1º dígito (ADR 0003). */
+export type Natureza =
+  | 'publica'
+  | 'empresarial'
+  | 'sem_fins_lucrativos'
+  | 'pessoa_fisica'
+  | 'nao_informada';
 
 /** GET /api/estabelecimentos/:cnes */
 export interface EstabelecimentoDTO {
@@ -84,7 +91,7 @@ export interface EstabelecimentoDTO {
   };
   telefone: string | null;
   email: string | null;
-  natureza: 'publica' | 'empresarial' | 'sem_fins_lucrativos' | 'pessoa_fisica' | 'nao_informada';
+  natureza: Natureza;
   sempreAberto: boolean;
   turno: string | null;
   horarios: HorarioDTO[];

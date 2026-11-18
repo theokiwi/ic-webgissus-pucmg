@@ -6,6 +6,7 @@ export interface ProximoRow {
   cnes: string;
   nome: string;
   categoria: string;
+  natureza: string;
   bairro: string | null;
   sempre_aberto: boolean;
   coord_ok: boolean;
@@ -20,6 +21,7 @@ export interface BuscaRow {
   cnes: string;
   nome: string;
   categoria: string;
+  natureza: string;
   municipio: string;
   bairro: string | null;
 }
@@ -70,7 +72,7 @@ export class EstabelecimentosRepository {
   proximos(lat: number, lon: number, categoria: string | null, limite: number, raioKm: number) {
     return this.db.linhas<ProximoRow>(
       `WITH ref AS (SELECT ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography AS g)
-       SELECT e.cnes::text AS cnes, e.nome, e.categoria, e.bairro, e.sempre_aberto, e.coord_ok,
+       SELECT e.cnes::text AS cnes, e.nome, e.categoria, e.natureza, e.bairro, e.sempre_aberto, e.coord_ok,
               m.nome AS municipio,
               ST_Distance(e.geom::geography, ref.g)::float8 AS distancia_m,
               ST_X(e.geom) AS lon, ST_Y(e.geom) AS lat,
@@ -88,7 +90,7 @@ export class EstabelecimentosRepository {
 
   busca(q: string, limite: number) {
     return this.db.linhas<BuscaRow>(
-      `SELECT e.cnes::text AS cnes, e.nome, e.categoria, m.nome AS municipio, e.bairro
+      `SELECT e.cnes::text AS cnes, e.nome, e.categoria, e.natureza, m.nome AS municipio, e.bairro
          FROM estabelecimento e
          JOIN municipio m ON m.cd = e.cd_municipio
         WHERE f_unaccent(lower(e.nome)) LIKE '%' || f_unaccent(lower($1)) || '%'
