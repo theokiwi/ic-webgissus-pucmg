@@ -47,11 +47,20 @@ export interface MunicipioDTO extends MunicipioResumoDTO {
   estabelecimentosPor10mil: number | null;
 }
 
+/** CO_NATUREZA_JUR do CNES, classificado pelo 1º dígito (ADR 0003). */
+export type Natureza =
+  | 'publica'
+  | 'empresarial'
+  | 'sem_fins_lucrativos'
+  | 'pessoa_fisica'
+  | 'nao_informada';
+
 /** Propriedades de cada Feature em GET /api/municipios/:cd/estabelecimentos (GeoJSON FeatureCollection<Point>). */
 export interface EstabelecimentoPontoProps {
   cnes: string;
   nome: string;
   categoria: CategoriaSlug;
+  natureza: Natureza;
   bairro: string | null;
   sempreAberto: boolean;
   coordOk: boolean;
@@ -64,13 +73,10 @@ export interface HorarioDTO {
   abre: string; // 'HH:MM'
   fecha: string; // 'HH:MM'
 }
-/** CO_NATUREZA_JUR do CNES, classificado pelo 1º dígito (ADR 0003). */
-export type Natureza =
-  | 'publica'
-  | 'empresarial'
-  | 'sem_fins_lucrativos'
-  | 'pessoa_fisica'
-  | 'nao_informada';
+
+/** Filtro de rede de atendimento escolhido pelo usuário na interface. */
+export type FiltroRede = 'todas' | 'publica' | 'privada';
+
 
 /** GET /api/estabelecimentos/:cnes */
 export interface EstabelecimentoDTO {
@@ -119,6 +125,7 @@ export interface BuscaItemDTO {
   cnes: string;
   nome: string;
   categoria: CategoriaSlug;
+  natureza: Natureza;
   municipio: string;
   bairro: string | null;
 }

@@ -25,6 +25,7 @@ export interface PontoRow {
   cnes: string;
   nome: string;
   categoria: string;
+  natureza: string;
   bairro: string | null;
   sempre_aberto: boolean;
   coord_ok: boolean;
@@ -77,7 +78,7 @@ export class MunicipiosRepository {
 
   pontos(cd: string, categoria: string | null) {
     return this.db.linhas<PontoRow>(
-      `SELECT e.cnes::text AS cnes, e.nome, e.categoria, e.bairro, e.sempre_aberto, e.coord_ok,
+         `SELECT e.cnes::text AS cnes, e.nome, e.categoria, e.natureza, e.bairro, e.sempre_aberto, e.coord_ok,
               ST_X(e.geom) AS lon, ST_Y(e.geom) AS lat
          FROM estabelecimento e
         WHERE e.cd_municipio = $1 AND ($2::text IS NULL OR e.categoria = $2)
