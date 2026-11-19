@@ -3,6 +3,7 @@ import type {
   BuscaItemDTO,
   CategoriaSlug,
   EstabelecimentoDTO,
+  Natureza,
   ProximoDTO,
 } from '@webgissus/domain';
 import type { BuscaParams, ProximosParams } from '../common/params.js';
@@ -19,6 +20,7 @@ export class EstabelecimentosService {
       cnes: r.cnes,
       nome: r.nome,
       categoria: r.categoria as CategoriaSlug,
+      natureza: r.natureza as Natureza,
       bairro: r.bairro,
       sempreAberto: r.sempre_aberto,
       coordOk: r.coord_ok,
@@ -36,6 +38,7 @@ export class EstabelecimentosService {
       cnes: r.cnes,
       nome: r.nome,
       categoria: r.categoria as CategoriaSlug,
+      natureza: r.natureza as Natureza,
       municipio: r.municipio,
       bairro: r.bairro,
     }));
