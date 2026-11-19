@@ -38,3 +38,44 @@ export function urlFichaCnes(codigoUnidade: string): string | null {
     ? `https://cnes.datasus.gov.br/pages/estabelecimentos/ficha/index.jsp?coUnidade=${codigoUnidade}`
     : null;
 }
+
+/**
+ * Aviso ao cidadão sobre tipos de unidade que aparecem no mapa mas não são
+ * ponto de atendimento direto: o serviço existe, mas o acesso costuma ser por
+ * encaminhamento, agendamento ou finalidade específica.
+ *
+ * Códigos de TP_UNIDADE do CNES conforme `pipelines/etl/classificacao.py`.
+ */
+const AVISO_POR_TIPO: Record<number, string> = {
+  39: 'Unidade de apoio a diagnóstico e terapia: realiza exames, mas o atendimento costuma exigir encaminhamento.',
+  61: 'Centro de parto normal isolado: atende parto normal, não é pronto-atendimento geral.',
+  69: 'Centro de hemoterapia e hematologia: foco em doação de sangue e tratamento hematológico.',
+  74: 'Polo Academia da Saúde: atividades de promoção e atividade física, sem atendimento médico no local.',
+  79: 'Oficina ortopédica: entrega e adapta órteses e próteses, não é pronto-atendimento.',
+  83: 'Polo de prevenção de doenças e promoção da saúde: ações de promoção, não atendimento clínico.',
+  85: 'Centro de imunização: atende vacinação, não consultas ou urgências.',
+};
+
+/** Explica o que esperar do local antes de sair de casa; null quando o tipo é ponto de atendimento comum. */
+export function avisoTipoUnidade(codigo: number): string | null {
+  return AVISO_POR_TIPO[codigo] ?? null;
+}
+
+/**
+ * Aviso combinado para a ficha: o do tipo de unidade, quando houver, e o de cadastro antigo,
+ * quando a unidade não atualiza os dados há mais de `limite` meses. Lista vazia quando não há nada a avisar.
+ */
+export function avisosDaFicha(
+  codigoTipoUnidade: number,
+  atualizadoEm: string | null,
+  competencia: string,
+  limite = MESES_CADASTRO_ANTIGO,
+): string[] {
+  const avisos: string[] = [];
+  const tipo = avisoTipoUnidade(codigoTipoUnidade);
+  if (tipo) avisos.push(tipo);
+  if (cadastroDesatualizado(atualizadoEm, competencia, limite)) {
+    avisos.push('O cadastro desta unidade no CNES não é atualizado há mais de dois anos. Confirme por telefone antes de ir.');
+  }
+  return avisos;
+}

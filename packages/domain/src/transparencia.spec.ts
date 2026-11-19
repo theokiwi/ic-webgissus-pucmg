@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  avisosDaFicha,
+  avisoTipoUnidade,
   cadastroDesatualizado,
   competenciaPorExtenso,
   MESES_CADASTRO_ANTIGO,
@@ -59,5 +61,44 @@ describe('urlFichaCnes', () => {
   it('rejeita códigos fora do formato', () => {
     expect(urlFichaCnes('0027049')).toBeNull();
     expect(urlFichaCnes('')).toBeNull();
+  });
+});
+
+describe('avisoTipoUnidade', () => {
+  it('explica os tipos que não são ponto de atendimento direto', () => {
+    expect(avisoTipoUnidade(39)).toContain('encaminhamento');
+    expect(avisoTipoUnidade(79)).toContain('órteses');
+    expect(avisoTipoUnidade(85)).toContain('vacinação');
+  });
+
+  it('não avisa para tipos de atendimento comum', () => {
+    expect(avisoTipoUnidade(1)).toBeNull();
+    expect(avisoTipoUnidade(5)).toBeNull();
+    expect(avisoTipoUnidade(73)).toBeNull();
+  });
+
+  it('código desconhecido não gera aviso', () => {
+    expect(avisoTipoUnidade(999)).toBeNull();
+  });
+});
+
+describe('avisosDaFicha', () => {
+  it('junta o aviso do tipo e o de cadastro antigo', () => {
+    const a = avisosDaFicha(79, '2015-01-10', '202609');
+    expect(a).toHaveLength(2);
+    expect(a[0]).toContain('órteses');
+    expect(a[1]).toContain('dois anos');
+  });
+
+  it('só o de cadastro antigo quando o tipo é comum', () => {
+    expect(avisosDaFicha(5, '2015-01-10', '202609')).toHaveLength(1);
+  });
+
+  it('só o do tipo quando o cadastro está recente', () => {
+    expect(avisosDaFicha(39, '2026-09-01', '202609')).toHaveLength(1);
+  });
+
+  it('lista vazia quando não há nada a avisar', () => {
+    expect(avisosDaFicha(5, '2026-09-01', '202609')).toEqual([]);
   });
 });
