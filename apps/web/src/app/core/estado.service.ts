@@ -7,8 +7,8 @@ import { ApiService } from './api.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { carregar, mensagemDeErro } from './carregar';
 import { calcularQuebras } from './escala';
-import { arredondarCoord, montarUrl, parseRota, type EstadoRota, type Ponto } from './estado-url';
-import type { PontoFeature } from './geojson';
+import { arredondarCoord, montarUrl, parseRota, visaoComPesquisa, type EstadoRota, type Ponto } from './estado-url';
+import type { PesquisaFeature, PontoFeature } from './geojson';
 import { LocalizacaoService } from './localizacao.service';
 import { temaPorId, valorTema, type TemaId } from './temas';
 
@@ -98,6 +98,36 @@ export class EstadoService {
   );
   readonly perto = carregar(this.chavePerto, (k) =>
     this.api.proximos(k.lat, k.lon, { categoria: k.cat, limite: 20, raioKm: k.raio }),
+  );
+
+  // --- pesquisa por tipo de unidade e critério do município (ADR 0010) ---
+  /** O bloco de pesquisa foi aberto: só então a lista de tipos é buscada. */
+  readonly pesquisaAberta = signal(false);
+  private readonly chaveTipos = computed(() =>
+    this.navegador && (this.pesquisaAberta() || this.rota().tipo !== null) ? this.tentativa() : null,
+  );
+  readonly tiposUnidade = carregar(this.chaveTipos, () => this.api.tiposUnidade());
+
+  private readonly chavePesquisa = computed(
+    () => {
+      const r = this.rota();
+      if (!this.navegador || !visaoComPesquisa(r.visao) || r.tipo === null) return null;
+      return {
+        tipo: r.tipo,
+        criterio: r.tema,
+        min: r.min,
+        max: r.max,
+        macro: r.visao === 'macro' ? r.cd : null,
+        regiao: r.visao === 'regiao' ? r.cd : null,
+        tentativa: this.tentativa(),
+      };
+    },
+    { equal: iguais },
+  );
+  readonly pesquisa = carregar(this.chavePesquisa, ({ tentativa: _, ...p }) => this.api.pesquisa(p));
+  readonly pesquisaAtiva = computed(() => this.chavePesquisa() !== null);
+  readonly resultadoPesquisa = computed<PesquisaFeature[]>(() =>
+    this.pesquisaAtiva() ? (this.pesquisa.dado()?.features ?? []) : [],
   );
 
   // --- rota até o estabelecimento da ficha ---
@@ -205,6 +235,11 @@ export class EstadoService {
     return porCat.filter((f) => naturezaNaRede(f.properties.natureza, rede));
   });
 
+  /** Pontos no mapa: os do município aberto, ou o resultado da pesquisa por tipo no painel de MG. */
+  readonly pontosNoMapa = computed<PontoFeature[]>(() =>
+    this.cdMunicipio() ? this.pontosVisiveis() : this.resultadoPesquisa(),
+  );
+
   /** Região a enquadrar no mapa; muda de identidade só quando o alvo muda. */
   readonly alvo = computed<{ chave: string; bbox: BBox }>(() => {
     const r = this.rota();
@@ -236,7 +271,8 @@ export class EstadoService {
       this.regioes.carregando() ||
       this.municipios.carregando() ||
       this.municipio.carregando() ||
-      this.pontos.carregando(),
+      this.pontos.carregando() ||
+      this.pesquisa.carregando(),
   );
 
   readonly erroGeral = computed(
@@ -259,8 +295,19 @@ export class EstadoService {
     this.tentativa.update((n) => n + 1);
   }
 
+  /** Troca o tema; a faixa da pesquisa é de outro indicador (outra unidade), então é descartada. */
   definirTema(tema: TemaId): void {
-    this.ir({ tema }, true);
+    if (tema === this.rota().tema) return;
+    this.ir({ tema, min: null, max: null }, true);
+  }
+
+  /** Aplica a pesquisa por tipo; o critério é o tema atual. */
+  pesquisar(tipo: number, min: number | null, max: number | null): void {
+    this.ir({ tipo, min, max }, true);
+  }
+
+  limparPesquisa(): void {
+    this.ir({ tipo: null, min: null, max: null }, true);
   }
 
   irParaMg(): void {
@@ -297,7 +344,8 @@ export class EstadoService {
   }
 
   abrirEstabelecimento(cnes: string): void {
-    this.voltarPara = this.rota().visao === 'perto' ? this.router.url : null;
+    // Vindo de "perto" ou de uma pesquisa por tipo, fechar a ficha volta à lista de onde ela saiu.
+    this.voltarPara = this.rota().visao === 'perto' || this.pesquisaAtiva() ? this.router.url : null;
     this.ir({ visao: 'estabelecimento', cnes, cd: null, modoRota: null, de: null });
   }
 
@@ -316,7 +364,7 @@ export class EstadoService {
 
   /** "Limpar": volta à visão inicial de MG, sem seleção nem filtros (o tema é mantido). */
   limpar(): void {
-    this.irParaMg();
+    this.ir({ visao: 'mg', cd: null, cnes: null, cat: null, q: '', tipo: null, min: null, max: null });
   }
 
   // --- perto de mim ---

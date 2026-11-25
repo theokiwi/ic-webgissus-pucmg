@@ -1,6 +1,7 @@
-import type { MunicipioResumoDTO } from '@webgissus/domain';
+import { valorIndicador, type IndicadorMunicipal, type MunicipioResumoDTO } from '@webgissus/domain';
 
-export type TemaId = 'populacao' | 'densidade' | 'por10mil' | 'total';
+/** Os temas do coroplético são os indicadores municipais (também critérios da pesquisa por tipo). */
+export type TemaId = IndicadorMunicipal;
 
 export interface Tema {
   id: TemaId;
@@ -68,14 +69,5 @@ export function ehTemaId(v: unknown): v is TemaId {
 
 /** Valor do município no tema; null quando não há dado (ex.: sem população). */
 export function valorTema(m: MunicipioResumoDTO, tema: TemaId): number | null {
-  switch (tema) {
-    case 'populacao':
-      return m.populacao;
-    case 'densidade':
-      return m.densidade;
-    case 'total':
-      return m.totalEstabelecimentos;
-    case 'por10mil':
-      return m.populacao ? (m.totalEstabelecimentos / m.populacao) * 10000 : null;
-  }
+  return valorIndicador(m, tema);
 }

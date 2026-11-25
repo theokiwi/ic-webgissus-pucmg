@@ -158,7 +158,18 @@ export class MapaComponent {
     });
     effect(() => {
       const c = comMapa();
-      if (c) c.definirPontos(this.estado.pontosVisiveis());
+      if (c) c.definirPontos(this.estado.pontosNoMapa());
+    });
+    effect(() => {
+      const c = comMapa();
+      if (c) c.definirPesquisaAtiva(this.estado.pesquisaAtiva() && !this.emMunicipio());
+    });
+    effect(() => {
+      // Enquadra o resultado da pesquisa por tipo quando ele chega.
+      const c = comMapa();
+      const r = this.estado.pesquisaAtiva() ? this.estado.pesquisa.dado() : null;
+      if (!c || !r?.features.length) return;
+      untracked(() => c.enquadrarPontos(r.features.map((f) => f.geometry.coordinates), this.folgas(false), 12));
     });
     effect(() => {
       const c = comMapa();

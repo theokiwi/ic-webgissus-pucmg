@@ -10,13 +10,14 @@ import { LegendaComponent, type ItemLegenda } from '../../shared/legenda.compone
 import { CabecalhoPainelComponent } from './cabecalho-painel.component';
 import { BuscaGlobalComponent } from './busca-global.component';
 import { BuscaLugarComponent } from './busca-lugar.component';
+import { PesquisaTipoComponent } from './pesquisa-tipo.component';
 import { SeletoresComponent } from './seletores.component';
 
 /** Painel da visão MG / macrorregião / região de saúde. */
 @Component({
   selector: 'app-painel-mg',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CabecalhoPainelComponent, BuscaLugarComponent, BuscaGlobalComponent, SeletoresComponent, LegendaComponent, ControleSetoresComponent, RouterLink],
+  imports: [CabecalhoPainelComponent, BuscaLugarComponent, BuscaGlobalComponent, SeletoresComponent, PesquisaTipoComponent, LegendaComponent, ControleSetoresComponent, RouterLink],
   template: `
     <app-cabecalho-painel />
 
@@ -68,6 +69,7 @@ import { SeletoresComponent } from './seletores.component';
       <app-legenda [titulo]="tema().titulo" [unidade]="tema().unidade" [itens]="itensLegenda()" />
       <app-controle-setores />
       <app-seletores />
+      <app-pesquisa-tipo />
     </section>
 
     <section class="secao" aria-labelledby="titulo-lista">

@@ -128,4 +128,33 @@ describe('URL ↔ estado', () => {
     expect(montarUrl({ ...ESTADO_INICIAL, visao: 'municipio', cd: '3106200', setores: true })).toBe('/municipio/3106200?setores=1');
     expect(montarUrl(parseRota('/?setores=1'))).toBe('/?setores=1');
   });
+
+  describe('pesquisa por tipo (ADR 0010)', () => {
+    it('lê tipo e faixa nas visões do painel de MG', () => {
+      expect(parseRota('/?tema=densidade&tipo=1&min=10&max=50.5')).toMatchObject({ tipo: 1, min: 10, max: 50.5 });
+      expect(parseRota('/macro/3101?tipo=2&max=20')).toMatchObject({ visao: 'macro', tipo: 2, min: null, max: 20 });
+      expect(parseRota('/regiao/31001?tipo=2&min=0')).toMatchObject({ visao: 'regiao', tipo: 2, min: 0, max: null });
+    });
+
+    it('ignora tipo inválido, faixa sem tipo e faixa invertida', () => {
+      expect(parseRota('/?tipo=abc&min=1')).toMatchObject({ tipo: null, min: null, max: null });
+      expect(parseRota('/?tipo=100')).toMatchObject({ tipo: null });
+      expect(parseRota('/?min=1&max=2')).toMatchObject({ tipo: null, min: null, max: null });
+      expect(parseRota('/?tipo=1&min=5&max=5')).toMatchObject({ tipo: 1, min: null, max: null });
+      expect(parseRota('/?tipo=1&min=x')).toMatchObject({ tipo: 1, min: null });
+    });
+
+    it('não vale fora do painel de MG', () => {
+      expect(parseRota('/municipio/3106200?tipo=1').tipo).toBeNull();
+      expect(parseRota('/perto?lat=-19.9&lon=-43.9&tipo=1').tipo).toBeNull();
+      expect(montarUrl({ ...ESTADO_INICIAL, visao: 'municipio', cd: '3106200', tipo: 1, min: 2 })).toBe('/municipio/3106200');
+    });
+
+    it('ida e volta', () => {
+      for (const url of ['/?tema=densidade&tipo=1&min=10&max=50.5', '/macro/3101?tipo=2&max=20', '/?tipo=43']) {
+        expect(montarUrl(parseRota(url))).toBe(url);
+      }
+      expect(montarUrl({ ...ESTADO_INICIAL, min: 1 })).toBe('/');
+    });
+  });
 });
