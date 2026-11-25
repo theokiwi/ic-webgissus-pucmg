@@ -13,3 +13,4 @@ Uma decisão por arquivo: contexto, decisão, consequências. Decisão nova que 
 | [0007](0007-deploy-vercel-neon.md) | Deploy gratuito: Vercel (site + API) e Neon (PostGIS), sem rotas desenhadas | Aceito |
 | [0008](0008-busca-por-lugar.md) | Busca por município, bairro ou endereço (Photon/OSM); regiões de saúde em filtro avançado | Aceito |
 | [0009](0009-divulgacao-acessos-e-selo.md) | Links de divulgação por canal, contagem anônima de acessos e selo de transparência | Aceito |
+| [0010](0010-pesquisa-por-tipo-e-criterio.md) | Pesquisa de unidades por tipo do CNES e indicador do município | Aceito |
