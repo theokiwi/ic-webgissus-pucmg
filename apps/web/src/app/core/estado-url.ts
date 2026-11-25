@@ -1,5 +1,6 @@
-import { CATEGORIAS, type CategoriaSlug, type ModoRota } from '@webgissus/domain';
 import { ehTemaId, TEMA_PADRAO, type TemaId } from './temas';
+import { CATEGORIAS, type CategoriaSlug, type FiltroRede, type ModoRota } from '@webgissus/domain';
+
 
 export type Visao = 'mg' | 'macro' | 'regiao' | 'municipio' | 'estabelecimento' | 'perto';
 
@@ -20,6 +21,8 @@ export interface EstadoRota {
   tema: TemaId;
   /** Filtro de categoria na visão do município. */
   cat: CategoriaSlug | null;
+  /** Filtro de rede (pública ou privada) aplicado às listas e ao mapa. */
+  rede: FiltroRede;
   /** Filtro local por nome/bairro. */
   q: string;
   /** Visão `perto`: ponto de consulta (4 casas decimais, ver `arredondarCoord`). */
@@ -42,6 +45,7 @@ export const ESTADO_INICIAL: EstadoRota = {
   cnes: null,
   tema: TEMA_PADRAO,
   cat: null,
+  rede: 'todas',
   q: '',
   ponto: null,
   raio: 30,
@@ -74,6 +78,10 @@ function ehCategoria(v: string | null): v is CategoriaSlug {
   return v !== null && CATEGORIAS.some((c) => c.slug === v);
 }
 
+function ehRede(v: string | null): v is FiltroRede {
+  return v === 'publica' || v === 'privada' || v === 'todas';
+}
+
 /** Interpreta uma URL (`/municipio/3106200?cat=hospital`). URLs inválidas voltam à visão de MG. */
 export function parseRota(url: string): EstadoRota {
   const semHash = url.split('#')[0];
@@ -87,6 +95,7 @@ export function parseRota(url: string): EstadoRota {
     ...ESTADO_INICIAL,
     tema: ehTemaId(temaParam) ? temaParam : TEMA_PADRAO,
     cat: ehCategoria(catParam) ? catParam : null,
+    rede: ehRede(params.get('rede')) ? (params.get('rede') as FiltroRede) : 'todas',
     q: (params.get('q') ?? '').slice(0, 80),
     setores: params.get('setores') === '1',
   };
@@ -144,6 +153,7 @@ export function montarUrl(e: EstadoRota): string {
   if (e.tema !== TEMA_PADRAO) params.set('tema', e.tema);
   if (e.setores) params.set('setores', '1');
   if (usaFiltros && e.cat) params.set('cat', e.cat);
+  if (usaFiltros && e.rede !== 'todas') params.set('rede', e.rede);
   if (usaFiltros && e.visao !== 'perto' && e.q.trim()) params.set('q', e.q.trim());
   // A vírgula de `de=lat,lon` é legal em query string; deixa a URL legível.
   const s = params.toString().replace(/%2C/gi, ',');

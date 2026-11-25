@@ -1,9 +1,10 @@
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { CATEGORIAS, categoria, situacaoFuncionamento, type ProximoDTO } from '@webgissus/domain';
-import { EstadoService } from '../../core/estado.service';
 import { distancia, numero } from '../../shared/formatadores';
 import { BuscaLugarComponent } from '../mapa/busca-lugar.component';
 import { descreverMudanca, rotuloSituacao } from '../../shared/situacao';
+import { EstadoService, naturezaNaRede } from '../../core/estado.service';
+
 
 /** Painel "Perto de mim": estabelecimentos mais próximos de um ponto (GET /api/estabelecimentos/proximos). */
 @Component({
@@ -83,6 +84,24 @@ import { descreverMudanca, rotuloSituacao } from '../../shared/situacao';
             </button>
           </li>
         }
+      </ul>
+          <h2 class="sub" id="titulo-rede-perto">Filtrar por rede</h2>
+      <ul class="chips" aria-labelledby="titulo-rede-perto">
+        <li>
+          <button type="button" class="chip" [class.ativo]="rede() === 'todas'" [attr.aria-pressed]="rede() === 'todas'" (click)="estado.filtrarRede('todas')">
+            Todas as redes
+          </button>
+        </li>
+        <li>
+          <button type="button" class="chip" [class.ativo]="rede() === 'publica'" [attr.aria-pressed]="rede() === 'publica'" (click)="estado.filtrarRede('publica')">
+            Rede pública (SUS)
+          </button>
+        </li>
+        <li>
+          <button type="button" class="chip" [class.ativo]="rede() === 'privada'" [attr.aria-pressed]="rede() === 'privada'" (click)="estado.filtrarRede('privada')">
+            Rede privada
+          </button>
+        </li>
       </ul>
 
       <div aria-live="polite" class="status">
@@ -193,6 +212,7 @@ export class PainelPertoComponent {
   protected readonly categorias = CATEGORIAS;
   protected readonly numero = numero;
 
+  protected readonly rede = computed(() => this.estado.rota().rede);
   protected readonly ponto = computed(() => this.estado.rota().ponto);
   protected readonly cat = computed(() => this.estado.rota().cat);
   protected readonly raio = computed(() => this.estado.rota().raio);
@@ -201,19 +221,21 @@ export class PainelPertoComponent {
   private readonly agora = signal(new Date());
 
   protected readonly linhas = computed(() =>
-    (this.estado.perto.dado() ?? []).map((p: ProximoDTO, idx) => {
-      const sit = situacaoFuncionamento(p.horarios, p.sempreAberto, this.agora());
-      return {
-        p,
-        n: idx + 1,
-        cor: categoria(p.categoria).cor,
-        rotulo: categoria(p.categoria).rotulo,
-        dist: distancia(p.distanciaM),
-        estado: sit.estado,
-        situacao: rotuloSituacao(sit),
-        mudanca: descreverMudanca(sit, this.agora()),
-      };
-    }),
+    (this.estado.perto.dado() ?? [])
+      .filter((p) => naturezaNaRede(p.natureza, this.rede()))
+      .map((p: ProximoDTO, idx) => {
+        const sit = situacaoFuncionamento(p.horarios, p.sempreAberto, this.agora());
+        return {
+          p,
+          n: idx + 1,
+          cor: categoria(p.categoria).cor,
+          rotulo: categoria(p.categoria).rotulo,
+          dist: distancia(p.distanciaM),
+          estado: sit.estado,
+          situacao: rotuloSituacao(sit),
+          mudanca: descreverMudanca(sit, this.agora()),
+        };
+      }),
   );
 
   constructor() {

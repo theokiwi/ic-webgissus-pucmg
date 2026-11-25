@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, Injectable, linkedSignal, PLATFORM_ID, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import type { BBox, CategoriaSlug, LugarDTO, MacrorregiaoDTO, ModoRota, MunicipioResumoDTO, ProximoDTO } from '@webgissus/domain';
+import type { BBox, CategoriaSlug, FiltroRede, LugarDTO, MacrorregiaoDTO, ModoRota, MunicipioResumoDTO, ProximoDTO } from '@webgissus/domain';
 import { normalizar } from '../shared/formatadores';
 import { ApiService } from './api.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,6 +11,16 @@ import { arredondarCoord, montarUrl, parseRota, type EstadoRota, type Ponto } fr
 import type { PontoFeature } from './geojson';
 import { LocalizacaoService } from './localizacao.service';
 import { temaPorId, valorTema, type TemaId } from './temas';
+
+/** Naturezas do CNES que contam como rede privada. */
+const NATUREZAS_PRIVADAS = ['empresarial', 'sem_fins_lucrativos', 'pessoa_fisica'] as const;
+
+/** Diz se uma natureza do CNES entra no recorte de rede escolhido. */
+export function naturezaNaRede(natureza: string, rede: FiltroRede): boolean {
+  if (rede === 'todas') return true;
+  if (rede === 'publica') return natureza === 'publica';
+  return (NATUREZAS_PRIVADAS as readonly string[]).includes(natureza);
+}
 
 /** Caixa envolvente aproximada de Minas Gerais. */
 export const BBOX_MG: BBox = [-51.05, -22.93, -39.85, -14.22];
@@ -185,11 +195,14 @@ export class EstadoService {
     return c;
   });
 
-  /** Pontos visíveis: filtro de texto e de categoria aplicados. */
+  /** Pontos visíveis: filtros de texto, categoria e rede aplicados. */
+  /** Pontos visíveis: filtros de texto, categoria e rede aplicados. */
   readonly pontosVisiveis = computed<PontoFeature[]>(() => {
-    const cat = this.rota().cat;
+    const { cat, rede } = this.rota();
     const base = this.pontosPorTexto();
-    return cat ? base.filter((f) => f.properties.categoria === cat) : base;
+    const porCat = cat ? base.filter((f) => f.properties.categoria === cat) : base;
+    if (rede === 'todas') return porCat;
+    return porCat.filter((f) => naturezaNaRede(f.properties.natureza, rede));
   });
 
   /** Região a enquadrar no mapa; muda de identidade só quando o alvo muda. */
@@ -273,6 +286,10 @@ export class EstadoService {
 
   filtrarCategoria(cat: CategoriaSlug | null): void {
     this.ir({ cat: this.rota().cat === cat ? null : cat }, true);
+  }
+
+  filtrarRede(rede: FiltroRede): void {
+    this.ir({ rede: this.rota().rede === rede ? 'todas' : rede }, true);
   }
 
   filtrarTexto(q: string): void {

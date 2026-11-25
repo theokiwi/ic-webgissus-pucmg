@@ -13,6 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import {
+  avisoTipoUnidade,
   cadastroDesatualizado,
   categoria,
   dataLocal,
@@ -72,6 +73,12 @@ const NATUREZA: Record<EstabelecimentoDTO['natureza'], string> = {
         <p class="aviso-cadastro" role="note">
           <b>Cadastro antigo:</b> esta unidade não atualiza seus dados no CNES há mais de {{ anosLimite }} anos (desde
           {{ atualizadoBr() }}). Horários e serviços podem ter mudado. Confirme por telefone antes de ir.
+        </p>
+      }
+
+            @if (avisoTipo(); as a) {
+        <p class="aviso-cadastro" role="note">
+          <b>Atenção:</b> {{ a }}
         </p>
       }
 
@@ -216,6 +223,11 @@ export class FichaComponent {
   protected readonly desatualizado = computed(() => {
     const f = this.d();
     return !!f && cadastroDesatualizado(f.atualizadoEm, f.competencia);
+  });
+    /** Aviso sobre tipos que aparecem no mapa mas não são ponto de atendimento direto. */
+  protected readonly avisoTipo = computed(() => {
+    const f = this.d();
+    return f ? avisoTipoUnidade(f.tipoUnidade.codigo) : null;
   });
   protected readonly atualizadoBr = computed(() => dataBr(this.d()?.atualizadoEm));
   protected readonly anosLimite = MESES_CADASTRO_ANTIGO / 12;

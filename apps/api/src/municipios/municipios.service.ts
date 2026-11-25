@@ -4,6 +4,7 @@ import type {
   EstabelecimentoPontoProps,
   MunicipioDTO,
   MunicipioResumoDTO,
+  Natureza,
 } from '@webgissus/domain';
 import {
   MunicipiosRepository,
@@ -75,6 +76,7 @@ export class MunicipiosService {
           cnes: p.cnes,
           nome: p.nome,
           categoria: p.categoria as CategoriaSlug,
+          natureza: p.natureza as Natureza,
           bairro: p.bairro,
           sempreAberto: p.sempre_aberto,
           coordOk: p.coord_ok,
