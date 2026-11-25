@@ -3,6 +3,7 @@
  * Esquema do banco correspondente: infra/db/001_schema.sql
  */
 import type { CategoriaSlug } from './categorias.js';
+import type { IndicadorMunicipal } from './pesquisa.js';
 
 /** GET /api/meta */
 export interface MetaDTO {
@@ -118,6 +119,39 @@ export interface ProximoDTO extends EstabelecimentoPontoProps {
   lon: number;
   lat: number;
   horarios: HorarioDTO[];
+}
+
+/** GET /api/estabelecimentos/tipos — tipos de unidade (TP_UNIDADE do CNES) presentes na carga. */
+export interface TipoUnidadeDTO {
+  codigo: number;
+  descricao: string;
+  categoria: CategoriaSlug;
+  /** Estabelecimentos desse tipo em MG. */
+  total: number;
+}
+
+/** Critério da pesquisa por tipo: indicador do município da unidade e faixa (min inclusivo, max exclusivo). ADR 0010. */
+export interface PesquisaParamsDTO {
+  tipo: number;
+  criterio: IndicadorMunicipal;
+  min: number | null;
+  max: number | null;
+  /** Recorte opcional (o mesmo dos filtros avançados). */
+  macro: string | null;
+  regiao: string | null;
+}
+
+/**
+ * Propriedades de cada Feature em
+ * GET /api/estabelecimentos/pesquisa?tipo=&criterio=&min=&max=&macro=&regiao= (GeoJSON FeatureCollection<Point>).
+ * Ordem: valor do critério decrescente (sem dado por último), município e nome.
+ */
+export interface PesquisaPontoProps extends EstabelecimentoPontoProps {
+  tipoUnidade: number;
+  cdMunicipio: string;
+  municipio: string;
+  /** Valor do critério no município da unidade. */
+  valor: number | null;
 }
 
 /** GET /api/estabelecimentos/busca?q=&limite=10 */
