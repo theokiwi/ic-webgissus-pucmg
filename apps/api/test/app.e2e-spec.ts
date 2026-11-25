@@ -146,6 +146,7 @@ describe('municipios', () => {
       cnes: '1000001',
       nome: 'UBS Centro Saúde',
       categoria: 'atencao_basica',
+      natureza: 'publica',
       bairro: 'Centro',
       sempreAberto: false,
       coordOk: true,
