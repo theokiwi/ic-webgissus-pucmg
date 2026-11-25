@@ -4,11 +4,23 @@ import type {
   CategoriaSlug,
   EstabelecimentoDTO,
   Natureza,
+  PesquisaParamsDTO,
+  PesquisaPontoProps,
   ProximoDTO,
+  TipoUnidadeDTO,
 } from '@webgissus/domain';
 import type { BuscaParams, ProximosParams } from '../common/params.js';
 import { EstabelecimentosRepository } from './estabelecimentos.repository.js';
 import { descricaoTipoUnidade } from './tipos-unidade.js';
+
+export interface FeatureCollectionPesquisa {
+  type: 'FeatureCollection';
+  features: {
+    type: 'Feature';
+    geometry: { type: 'Point'; coordinates: [number, number] };
+    properties: PesquisaPontoProps;
+  }[];
+}
 
 @Injectable()
 export class EstabelecimentosService {
@@ -30,6 +42,42 @@ export class EstabelecimentosService {
       lat: r.lat,
       horarios: r.horarios,
     }));
+  }
+
+  async tipos(): Promise<TipoUnidadeDTO[]> {
+    const linhas = await this.repo.tipos();
+    return linhas
+      .map((r) => ({
+        codigo: r.codigo,
+        descricao: descricaoTipoUnidade(r.codigo),
+        categoria: r.categoria as CategoriaSlug,
+        total: r.total,
+      }))
+      .sort((a, b) => a.descricao.localeCompare(b.descricao, 'pt-BR'));
+  }
+
+  async pesquisa(p: PesquisaParamsDTO): Promise<FeatureCollectionPesquisa> {
+    const linhas = await this.repo.pesquisa(p);
+    return {
+      type: 'FeatureCollection',
+      features: linhas.map((r) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
+        properties: {
+          cnes: r.cnes,
+          nome: r.nome,
+          categoria: r.categoria as CategoriaSlug,
+          natureza: r.natureza as Natureza,
+          bairro: r.bairro,
+          sempreAberto: r.sempre_aberto,
+          coordOk: r.coord_ok,
+          tipoUnidade: r.tp_unidade,
+          cdMunicipio: r.cd_municipio,
+          municipio: r.municipio,
+          valor: r.valor,
+        },
+      })),
+    };
   }
 
   async busca(p: BuscaParams): Promise<BuscaItemDTO[]> {

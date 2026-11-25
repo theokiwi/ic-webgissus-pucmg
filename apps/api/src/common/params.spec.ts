@@ -4,6 +4,7 @@ import {
   parseCategoria,
   parseDigitos,
   parseLugares,
+  parsePesquisa,
   parseParLatLon,
   parseProximos,
   parseRota,
@@ -93,5 +94,34 @@ describe('parseRota', () => {
     expect(() => parseRota({ de: '-19.9,-43.9', para: '-19.8,-43.8', modo: 'x' })).toThrow(
       BadRequestException,
     );
+  });
+});
+
+describe('parsePesquisa', () => {
+  const ok = { tipo: '1', criterio: 'densidade' };
+
+  it('faixa e recorte opcionais', () => {
+    expect(parsePesquisa(ok)).toEqual({ tipo: 1, criterio: 'densidade', min: null, max: null, macro: null, regiao: null });
+    expect(parsePesquisa({ ...ok, min: '10.5', max: '', macro: '3101', regiao: '31001' })).toEqual({
+      tipo: 1, criterio: 'densidade', min: 10.5, max: null, macro: '3101', regiao: '31001',
+    });
+  });
+
+  it.each([
+    {},
+    { criterio: 'densidade' },
+    { ...ok, tipo: 'x' },
+    { ...ok, tipo: '0' },
+    { ...ok, tipo: '100' },
+    { ...ok, tipo: '1.5' },
+    { tipo: '1' },
+    { ...ok, criterio: 'area' },
+    { ...ok, criterio: 'toString' },
+    { ...ok, min: 'abc' },
+    { ...ok, min: '5', max: '5' },
+    { ...ok, min: '6', max: '5' },
+    { ...ok, macro: '31' },
+  ])('rejeita %j', (q) => {
+    expect(() => parsePesquisa(q)).toThrow(BadRequestException);
   });
 });

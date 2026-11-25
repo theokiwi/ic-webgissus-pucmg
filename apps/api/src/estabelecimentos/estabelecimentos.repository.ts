@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Db } from '../database/database.module.js';
-import type { HorarioDTO } from '@webgissus/domain';
+import type { HorarioDTO, IndicadorMunicipal, PesquisaParamsDTO } from '@webgissus/domain';
 
 export interface ProximoRow {
   cnes: string;
@@ -51,6 +51,39 @@ export interface EstabelecimentoRow {
   lat: number;
   competencia: string | null;
 }
+
+export interface PesquisaRow {
+  cnes: string;
+  nome: string;
+  categoria: string;
+  natureza: string;
+  tp_unidade: number;
+  bairro: string | null;
+  sempre_aberto: boolean;
+  coord_ok: boolean;
+  lon: number;
+  lat: number;
+  cd_municipio: string;
+  municipio: string;
+  valor: number | null;
+}
+
+export interface TipoRow {
+  codigo: number;
+  categoria: string;
+  total: number;
+}
+
+/**
+ * Valor de cada indicador municipal em SQL (aliases do CTE `ind` em `pesquisa`). Mesmo cálculo de
+ * valorIndicador() em packages/domain/src/pesquisa.ts; o Record obriga a cobrir todos os critérios.
+ */
+const SQL_INDICADOR: Record<IndicadorMunicipal, string> = {
+  populacao: 'm.populacao::float8',
+  densidade: 'm.densidade',
+  total: 'COALESCE(t.n, 0)::float8',
+  por10mil: 'CASE WHEN m.populacao > 0 THEN COALESCE(t.n, 0) * 10000.0::float8 / m.populacao END',
+};
 
 const HORARIOS_JSON = `
   COALESCE((SELECT json_agg(json_build_object(
@@ -138,6 +171,41 @@ export class EstabelecimentosRepository {
     return this.db.linhas<{ atendimento: string; sus: boolean }>(
       `SELECT atendimento, sus FROM estabelecimento_atendimento WHERE cnes = $1 ORDER BY atendimento`,
       [cnes],
+    );
+  }
+
+  /** Quantidade de estabelecimentos por tipo de unidade (e a categoria em que o tipo cai). */
+  tipos() {
+    return this.db.linhas<TipoRow>(
+      `SELECT tp_unidade::int AS codigo, categoria, count(*)::int AS total
+         FROM estabelecimento GROUP BY tp_unidade, categoria`,
+    );
+  }
+
+  /**
+   * Estabelecimentos do tipo cujo município tem o indicador na faixa: min inclusivo, max exclusivo;
+   * com algum limite, município sem dado fica de fora (regra em packages/domain/src/pesquisa.ts, ADR 0010).
+   */
+  pesquisa(p: PesquisaParamsDTO) {
+    return this.db.linhas<PesquisaRow>(
+      `WITH t AS (SELECT cd_municipio, count(*)::int AS n FROM estabelecimento GROUP BY cd_municipio),
+            ind AS (
+              SELECT m.cd, m.nome, ${SQL_INDICADOR[p.criterio]} AS valor
+                FROM municipio m LEFT JOIN t ON t.cd_municipio = m.cd
+               WHERE ($2::text IS NULL OR m.cd_macro = $2)
+                 AND ($3::text IS NULL OR m.cd_regiao = $3))
+       SELECT e.cnes::text AS cnes, e.nome, e.categoria, e.natureza, e.tp_unidade::int AS tp_unidade, e.bairro,
+              e.sempre_aberto, e.coord_ok, ST_X(e.geom) AS lon, ST_Y(e.geom) AS lat,
+              ind.cd::text AS cd_municipio, ind.nome AS municipio, ind.valor::float8 AS valor
+         FROM estabelecimento e
+         JOIN ind ON ind.cd = e.cd_municipio
+        WHERE e.tp_unidade = $1
+          AND (($4::float8 IS NULL AND $5::float8 IS NULL)
+               OR (ind.valor IS NOT NULL
+                   AND ($4::float8 IS NULL OR ind.valor >= $4)
+                   AND ($5::float8 IS NULL OR ind.valor < $5)))
+        ORDER BY ind.valor DESC NULLS LAST, ind.nome, e.nome, e.cnes`,
+      [p.tipo, p.macro, p.regiao, p.min, p.max],
     );
   }
 }
