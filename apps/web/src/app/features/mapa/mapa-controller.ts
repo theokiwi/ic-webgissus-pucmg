@@ -128,6 +128,7 @@ export class MapaController {
   private dica!: Popup;
   private emMunicipio = false;
   private emPerto = false;
+  private emPesquisa = false;
   private escolhendo = false;
   private setoresLigados = false;
 
@@ -482,8 +483,15 @@ export class MapaController {
     this.atualizarOpacidadeMunicipios();
   }
 
+  /** Com a pesquisa por tipo ativa, o coroplético fica mais claro para os pontos se destacarem. */
+  definirPesquisaAtiva(ativa: boolean): void {
+    this.emPesquisa = ativa;
+    this.atualizarOpacidadeMunicipios();
+  }
+
   private atualizarOpacidadeMunicipios(): void {
-    this.map.setPaintProperty('mun-fill', 'fill-opacity', this.emMunicipio || this.emPerto ? 0.08 : 0.78);
+    const opacidade = this.emMunicipio || this.emPerto ? 0.08 : this.emPesquisa ? 0.45 : 0.78;
+    this.map.setPaintProperty('mun-fill', 'fill-opacity', opacidade);
   }
 
   definirPontos(features: PontoFeature[]): void {

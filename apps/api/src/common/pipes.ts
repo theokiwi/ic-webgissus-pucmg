@@ -4,6 +4,7 @@ import {
   parseCategoria,
   parseDigitos,
   parseLugares,
+  parsePesquisa,
   parseProximos,
   parseRota,
   type BuscaParams,
@@ -11,7 +12,7 @@ import {
   type RotaParams,
   type Texto,
 } from './params.js';
-import type { CategoriaSlug } from '@webgissus/domain';
+import type { CategoriaSlug, PesquisaParamsDTO } from '@webgissus/domain';
 
 /** Código IBGE de município (7 dígitos). */
 @Injectable()
@@ -61,5 +62,12 @@ export class LugaresPipe implements PipeTransform<Record<string, Texto>, BuscaPa
 export class RotaPipe implements PipeTransform<Record<string, Texto>, RotaParams> {
   transform(q: Record<string, Texto>) {
     return parseRota(q);
+  }
+}
+
+@Injectable()
+export class PesquisaPipe implements PipeTransform<Record<string, Texto>, PesquisaParamsDTO> {
+  transform(q: Record<string, Texto>) {
+    return parsePesquisa(q);
   }
 }

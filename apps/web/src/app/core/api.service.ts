@@ -10,11 +10,13 @@ import type {
   ModoRota,
   MunicipioResumoDTO,
   OrigemAcesso,
+  PesquisaParamsDTO,
   ProximoDTO,
   RotaDTO,
+  TipoUnidadeDTO,
 } from '@webgissus/domain';
 import type { Observable } from 'rxjs';
-import type { PontosCollection } from './geojson';
+import type { PesquisaCollection, PontosCollection } from './geojson';
 
 /** Cliente HTTP tipado com o contrato de packages/domain/src/api.ts. */
 @Injectable({ providedIn: 'root' })
@@ -47,6 +49,21 @@ export class ApiService {
 
   estabelecimento(cnes: string): Observable<EstabelecimentoDTO> {
     return this.http.get<EstabelecimentoDTO>(`${this.base}/estabelecimentos/${encodeURIComponent(cnes)}`);
+  }
+
+  /** Tipos de unidade (TP_UNIDADE do CNES) presentes na carga, com o total em MG. */
+  tiposUnidade(): Observable<TipoUnidadeDTO[]> {
+    return this.http.get<TipoUnidadeDTO[]>(`${this.base}/estabelecimentos/tipos`);
+  }
+
+  /** Estabelecimentos de um tipo cujo município está na faixa do critério (ADR 0010). */
+  pesquisa(p: PesquisaParamsDTO): Observable<PesquisaCollection> {
+    let params = new HttpParams().set('tipo', p.tipo).set('criterio', p.criterio);
+    if (p.min !== null) params = params.set('min', p.min);
+    if (p.max !== null) params = params.set('max', p.max);
+    if (p.macro) params = params.set('macro', p.macro);
+    if (p.regiao) params = params.set('regiao', p.regiao);
+    return this.http.get<PesquisaCollection>(`${this.base}/estabelecimentos/pesquisa`, { params });
   }
 
   busca(q: string, limite = 10): Observable<BuscaItemDTO[]> {

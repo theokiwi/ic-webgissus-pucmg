@@ -1,5 +1,5 @@
 import { ehTemaId, TEMA_PADRAO, type TemaId } from './temas';
-import { CATEGORIAS, type CategoriaSlug, type FiltroRede, type ModoRota } from '@webgissus/domain';
+import { CATEGORIAS, faixaValida, type CategoriaSlug, type FiltroRede, type ModoRota } from '@webgissus/domain';
 
 
 export type Visao = 'mg' | 'macro' | 'regiao' | 'municipio' | 'estabelecimento' | 'perto';
@@ -37,6 +37,13 @@ export interface EstadoRota {
   de: Ponto | null;
   /** Camada de setores censitários ligada. */
   setores: boolean;
+  /**
+   * Pesquisa por tipo de unidade (visões mg/macro/regiao, ADR 0010): TP_UNIDADE do CNES.
+   * O critério é o tema; `min` (inclusivo) e `max` (exclusivo) limitam o valor no município.
+   */
+  tipo: number | null;
+  min: number | null;
+  max: number | null;
 }
 
 export const ESTADO_INICIAL: EstadoRota = {
@@ -53,7 +60,15 @@ export const ESTADO_INICIAL: EstadoRota = {
   modoRota: null,
   de: null,
   setores: false,
+  tipo: null,
+  min: null,
+  max: null,
 };
+
+/** Visões em que a pesquisa por tipo vale (as do painel de MG). */
+export function visaoComPesquisa(v: Visao): boolean {
+  return v === 'mg' || v === 'macro' || v === 'regiao';
+}
 
 const SO_DIGITOS = /^\d{1,12}$/;
 
@@ -68,6 +83,25 @@ function lerPonto(lat: string | null, lon: string | null): Ponto | null {
   const lo = Number(lon);
   if (!Number.isFinite(la) || !Number.isFinite(lo) || Math.abs(la) > 90 || Math.abs(lo) > 180) return null;
   return { lat: arredondarCoord(la), lon: arredondarCoord(lo) };
+}
+
+function lerNumero(v: string | null): number | null {
+  if (v === null || v.trim() === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function lerTipo(v: string | null): number | null {
+  const n = lerNumero(v);
+  return n !== null && Number.isInteger(n) && n >= 1 && n <= 99 ? n : null;
+}
+
+/** Faixa inválida (mínimo >= máximo) é descartada inteira. */
+function lerPesquisa(params: URLSearchParams): Pick<EstadoRota, 'tipo' | 'min' | 'max'> {
+  const tipo = lerTipo(params.get('tipo'));
+  if (tipo === null) return { tipo: null, min: null, max: null };
+  const faixa = { min: lerNumero(params.get('min')), max: lerNumero(params.get('max')) };
+  return faixaValida(faixa) ? { tipo, ...faixa } : { tipo, min: null, max: null };
 }
 
 function ehModo(v: string | null): v is ModoRota {
@@ -112,7 +146,8 @@ export function parseRota(url: string): EstadoRota {
     };
   }
   if (segs.length === 2 && SO_DIGITOS.test(id)) {
-    if (tipo === 'macro' || tipo === 'regiao' || tipo === 'municipio') return { ...base, visao: tipo, cd: id };
+    if (tipo === 'macro' || tipo === 'regiao') return { ...base, ...lerPesquisa(params), visao: tipo, cd: id };
+    if (tipo === 'municipio') return { ...base, visao: tipo, cd: id };
     if (tipo === 'estabelecimento') {
       const deParam = params.get('de')?.split(',') ?? [];
       const modoParam = params.get('rota');
@@ -125,7 +160,7 @@ export function parseRota(url: string): EstadoRota {
       };
     }
   }
-  return { ...base, cat: null, q: '' };
+  return { ...base, ...lerPesquisa(params), cat: null, q: '' };
 }
 
 /** Inverso de `parseRota`; omite parâmetros com valor padrão. */
@@ -152,6 +187,11 @@ export function montarUrl(e: EstadoRota): string {
   }
   if (e.tema !== TEMA_PADRAO) params.set('tema', e.tema);
   if (e.setores) params.set('setores', '1');
+  if (visaoComPesquisa(e.visao) && e.tipo !== null) {
+    params.set('tipo', String(e.tipo));
+    if (e.min !== null) params.set('min', String(e.min));
+    if (e.max !== null) params.set('max', String(e.max));
+  }
   if (usaFiltros && e.cat) params.set('cat', e.cat);
   if (usaFiltros && e.rede !== 'todas') params.set('rede', e.rede);
   if (usaFiltros && e.visao !== 'perto' && e.q.trim()) params.set('q', e.q.trim());

@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import type { CategoriaSlug, ModoRota } from '@webgissus/domain';
+import type { CategoriaSlug, IndicadorMunicipal, ModoRota, PesquisaParamsDTO } from '@webgissus/domain';
 import { ehCategoria } from './categorias.js';
 
 /** Envelope generoso de Minas Gerais. */
@@ -147,4 +147,41 @@ export function parseRota(q: Record<string, Texto>): RotaParams {
     throw new BadRequestException(`modo deve ser um de: ${MODOS.join(', ')}`);
   }
   return { de: parseParLatLon(q.de, 'de'), para: parseParLatLon(q.para, 'para'), modo: modo as ModoRota };
+}
+
+/** Número opcional (aceita negativos e decimais); vazio = null. */
+export function parseNumeroOpcional(valor: Texto, nome: string): number | null {
+  if (valor === undefined || valor.trim() === '') return null;
+  return parseNumero(valor, nome);
+}
+
+/**
+ * Critérios aceitos (indicadores municipais). O pacote domain não é carregado em runtime pela
+ * API (exporta .ts), então a lista é repetida aqui; o Record obriga a cobrir todos os do tipo.
+ */
+const CRITERIOS: Record<IndicadorMunicipal, true> = { populacao: true, densidade: true, por10mil: true, total: true };
+export const LISTA_CRITERIOS = Object.keys(CRITERIOS) as IndicadorMunicipal[];
+
+function ehCriterio(v: Texto): v is IndicadorMunicipal {
+  return v !== undefined && Object.hasOwn(CRITERIOS, v);
+}
+
+/** GET /api/estabelecimentos/pesquisa (ADR 0010). */
+export function parsePesquisa(q: Record<string, Texto>): PesquisaParamsDTO {
+  const tipo = Number(q.tipo);
+  if (q.tipo === undefined || q.tipo.trim() === '' || !Number.isInteger(tipo) || tipo < 1 || tipo > 99) {
+    throw new BadRequestException('tipo deve ser o código do tipo de unidade do CNES (inteiro de 1 a 99)');
+  }
+  if (!ehCriterio(q.criterio)) {
+    throw new BadRequestException(`criterio deve ser um de: ${LISTA_CRITERIOS.join(', ')}`);
+  }
+  const faixa = { min: parseNumeroOpcional(q.min, 'min'), max: parseNumeroOpcional(q.max, 'max') };
+  if (faixa.min !== null && faixa.max !== null && faixa.min >= faixa.max) throw new BadRequestException('min deve ser menor que max');
+  return {
+    tipo,
+    criterio: q.criterio,
+    ...faixa,
+    macro: parseDigitosOpcional(q.macro, 4, 'macro'),
+    regiao: parseDigitosOpcional(q.regiao, 5, 'regiao'),
+  };
 }

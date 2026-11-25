@@ -146,6 +146,7 @@ describe('municipios', () => {
       cnes: '1000001',
       nome: 'UBS Centro Saúde',
       categoria: 'atencao_basica',
+      natureza: 'publica',
       bairro: 'Centro',
       sempreAberto: false,
       coordOk: true,
@@ -244,6 +245,64 @@ describe('estabelecimentos', () => {
   it('404 e 400 no detalhe', async () => {
     await http().get('/api/estabelecimentos/9999999').expect(404);
     await http().get('/api/estabelecimentos/12').expect(400);
+  });
+});
+
+describe('pesquisa por tipo e critério do município', () => {
+  const url = (q: string) => `/api/estabelecimentos/pesquisa?${q}`;
+  const cnes = (r: any) => r.body.features.map((f: any) => f.properties.cnes);
+
+  it('GET /api/estabelecimentos/tipos conta por tipo com descrição', async () => {
+    const r = await http().get('/api/estabelecimentos/tipos').expect(200);
+    expect(r.body).toContainEqual({ codigo: 2, descricao: 'Centro de saúde/Unidade básica', categoria: 'atencao_basica', total: 2 });
+    expect(r.body).toHaveLength(9);
+    const d = r.body.map((t: any) => t.descricao);
+    expect(d).toEqual([...d].sort((a: string, b: string) => a.localeCompare(b, 'pt-BR')));
+  });
+
+  it('sem faixa traz todo o tipo, com o valor do critério e propriedades do ponto', async () => {
+    const r = await http().get(url('tipo=2&criterio=densidade')).expect(200);
+    expect(r.body.type).toBe('FeatureCollection');
+    expect(cnes(r)).toEqual(['1000001', '1000009']);
+    expect(r.body.features[0]).toEqual({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [-43.95, -19.95] },
+      properties: {
+        cnes: '1000001', nome: 'UBS Centro Saúde', categoria: 'atencao_basica', natureza: 'publica', bairro: 'Centro',
+        sempreAberto: false, coordOk: true, tipoUnidade: 2, cdMunicipio: '3100001', municipio: 'Alfa', valor: 82.99,
+      },
+    });
+  });
+
+  it('mínimo inclusivo e máximo exclusivo', async () => {
+    expect(cnes(await http().get(url('tipo=2&criterio=densidade&min=82.99')).expect(200))).toHaveLength(2);
+    expect(cnes(await http().get(url('tipo=2&criterio=densidade&max=82.99')).expect(200))).toEqual([]);
+    expect(cnes(await http().get(url('tipo=70&criterio=densidade&min=50&max=60')).expect(200))).toEqual(['1000005']);
+  });
+
+  it('município sem dado só entra quando não há limite', async () => {
+    const sem = await http().get(url('tipo=43&criterio=densidade')).expect(200);
+    expect(sem.body.features[0].properties).toMatchObject({ cnes: '1000006', valor: null });
+    expect(cnes(await http().get(url('tipo=43&criterio=densidade&min=0')).expect(200))).toEqual([]);
+    expect(cnes(await http().get(url('tipo=43&criterio=por10mil&max=1000')).expect(200))).toEqual([]);
+  });
+
+  it('calcula total e estabelecimentos por 10 mil do município', async () => {
+    const tot = await http().get(url('tipo=5&criterio=total')).expect(200);
+    expect(tot.body.features[0].properties.valor).toBe(5);
+    const p10 = await http().get(url('tipo=73&criterio=por10mil&min=5&max=7')).expect(200);
+    expect(p10.body.features[0].properties).toMatchObject({ municipio: 'Beta', valor: 6 });
+    const pop = await http().get(url('tipo=73&criterio=populacao&min=5000')).expect(200);
+    expect(pop.body.features[0].properties.valor).toBe(5000);
+  });
+
+  it('respeita o recorte e valida os parâmetros', async () => {
+    expect(cnes(await http().get(url('tipo=2&criterio=densidade&macro=3101&regiao=31001')).expect(200))).toHaveLength(2);
+    expect(cnes(await http().get(url('tipo=2&criterio=densidade&macro=9999')).expect(200))).toEqual([]);
+    await http().get(url('criterio=densidade')).expect(400);
+    await http().get(url('tipo=2')).expect(400);
+    await http().get(url('tipo=2&criterio=xyz')).expect(400);
+    await http().get(url('tipo=2&criterio=densidade&min=5&max=1')).expect(400);
   });
 });
 
